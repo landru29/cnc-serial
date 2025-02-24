@@ -1,2 +1,5 @@
 serial:
-	go build -o serial ./serial.go
+	go build -o serial ./cmd/serial.go
+
+clean:
+	rm -f serial

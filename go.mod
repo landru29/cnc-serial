@@ -1,4 +1,4 @@
-module serial
+module github.com/landru29/serial
 
 go 1.18
 
@@ -6,7 +6,6 @@ require (
 	github.com/gdamore/tcell/v2 v2.7.1
 	github.com/rivo/tview v0.0.0-20241227133733-17b7edb88c57
 	github.com/spf13/cobra v1.9.1
-	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 	go.bug.st/serial v1.6.2
 )
 

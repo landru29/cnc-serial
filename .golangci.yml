@@ -1,0 +1,41 @@
+run:
+  timeout: 2m
+  build-tags:
+    - bacgo
+
+linters-settings:
+  cyclop:
+    max-complexity: 15
+  funlen:
+    lines: 100
+    statements: 40
+
+linters:
+  enable-all: true
+  disable:
+    - wrapcheck
+    - paralleltest
+    - err113
+    - exhaustruct
+    - interfacebloat
+    - depguard
+    - godox
+    - maintidx
+# Deprecated
+    - exportloopref
+    - execinquery
+    - gomnd
+# Not supported by go 1.18
+    - copyloopvar
+    - intrange
+
+
+issues:
+  exclude-use-default: false
+
+severity:
+  default-severity: error
+  rules:
+    - linters:
+      - godox
+      severity: info
