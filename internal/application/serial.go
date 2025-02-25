@@ -64,9 +64,9 @@ func (c Client) Bind() {
 		case errors.Is(err, io.EOF):
 			// Do nothing
 		case err != nil:
-			_, _ = fmt.Fprintf(c.logArea, "> ERR %s\n", err.Error())
+			_, _ = fmt.Fprintf(c.logArea, " [#ff0000]ERR %s\n", err.Error())
 		default:
-			_, _ = fmt.Fprintf(c.logArea, "  < %s", string(buf[:count]))
+			_, _ = fmt.Fprintf(c.logArea, " [#00ff00]%s", string(buf[:count]))
 		}
 
 		time.Sleep(delayBetweenSerialReads)

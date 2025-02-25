@@ -48,16 +48,18 @@ func (c *Client) buildView() {
 		})
 
 	c.userInput.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyUp && c.cursor >= 0 {
-			c.userInput.SetText(c.lastCommand[c.cursor])
+		switch event.Key() { //nolint: exhaustive
+		case tcell.KeyUp:
+			if cmd := c.commandStack.NavigateUp(); cmd != "" {
+				c.userInput.SetText(cmd)
+			}
+		case tcell.KeyDown:
+			if cmd := c.commandStack.NavigateDown(); cmd != "" {
+				c.userInput.SetText(cmd)
+			}
 
-			c.cursor--
-		}
-
-		if event.Key() == tcell.KeyDown && c.cursor >= 0 && c.cursor < len(c.lastCommand)-1 {
-			c.userInput.SetText(c.lastCommand[c.cursor])
-
-			c.cursor++
+		default:
+			c.commandStack.ResetCursor()
 		}
 
 		return event

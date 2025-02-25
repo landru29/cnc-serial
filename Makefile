@@ -3,3 +3,6 @@ serial:
 
 clean:
 	rm -f serial
+
+lint:
+	golangci-lint run ./...

@@ -3,6 +3,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/landru29/serial/internal/application"
 	"github.com/landru29/serial/internal/gcode"
@@ -49,7 +51,12 @@ func mainCommand() (*cobra.Command, error) {
 	output.Flags().IntVarP(&bitRate, "bit-rate", "b", defaultBitRate, "Bit rate")
 	output.Flags().StringVarP(&portName, "port", "p", app.DefaultPort(), "Port name")
 	output.Flags().BoolVarP(&dryRun, "dry-run", "d", false, "Dry run (do not open serial port)")
-	output.Flags().VarP(&language, "lang", "l", "language")
+	output.Flags().VarP(
+		&language,
+		"lang",
+		"l",
+		fmt.Sprintf("language (available: %s)", strings.Join(app.AvailableLanguages(), ", ")),
+	)
 
 	return output, nil
 }

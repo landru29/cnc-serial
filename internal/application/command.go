@@ -2,6 +2,7 @@ package application
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/landru29/serial/internal/gcode"
 )
@@ -16,6 +17,5 @@ func (c *Client) SendCommand(text string) {
 		}
 	}
 
-	c.lastCommand = append(c.lastCommand, text)
-	c.cursor = len(c.lastCommand) - 1
+	c.commandStack.Push(strings.ToUpper(text))
 }

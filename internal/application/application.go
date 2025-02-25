@@ -6,14 +6,14 @@ import (
 	"strings"
 
 	"github.com/landru29/serial/internal/gcode"
+	"github.com/landru29/serial/internal/stack"
 	"github.com/rivo/tview"
 	"go.bug.st/serial"
 )
 
 // Client is the main application structure.
 type Client struct {
-	lastCommand  []string
-	cursor       int
+	commandStack stack.Stack
 	port         serial.Port
 	display      *tview.Application
 	userInput    *tview.InputField
@@ -57,4 +57,15 @@ func (c Client) codeDescription(code string) string {
 	}
 
 	return ""
+}
+
+// AvailableLanguages lists all available languages.
+func (c Client) AvailableLanguages() []string {
+	output := []string{}
+
+	for lang := range c.translations {
+		output = append(output, string(lang))
+	}
+
+	return output
 }
