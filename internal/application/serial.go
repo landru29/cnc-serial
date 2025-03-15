@@ -1,18 +1,8 @@
 package application
 
 import (
-	"errors"
-	"fmt"
-	"io"
-	"time"
-
+	controlserial "github.com/landru29/serial/internal/control/serial"
 	"go.bug.st/serial"
-)
-
-const (
-	bufferSize = 200
-
-	delayBetweenSerialReads = 500 * time.Millisecond
 )
 
 // OpenPort opens the serial port.
@@ -24,20 +14,22 @@ func (c *Client) OpenPort(name string, bitRate int) error {
 		return err
 	}
 
-	c.port = port
+	c.commander = controlserial.New(port, c.screen.Output())
+
+	c.screen.SetCommander(c.commander)
 
 	return nil
 }
 
 // Close implements the io.Closer interface.
 func (c *Client) Close() error {
-	if c.port != nil {
-		err := c.port.Close()
+	if c.commander != nil {
+		err := c.commander.Close()
 		if err != nil {
 			return err
 		}
 
-		c.port = nil
+		c.commander = nil
 	}
 
 	return nil
@@ -51,24 +43,4 @@ func (c Client) DefaultPort() string {
 	}
 
 	return ""
-}
-
-// Bind reads data from the serial port when available.
-func (c Client) Bind() {
-	for {
-		buf := make([]byte, bufferSize)
-
-		count, err := c.port.Read(buf)
-
-		switch {
-		case errors.Is(err, io.EOF):
-			// Do nothing
-		case err != nil:
-			_, _ = fmt.Fprintf(c.logArea, " [#ff0000]ERR %s\n", err.Error())
-		default:
-			_, _ = fmt.Fprintf(c.logArea, " [#00ff00]%s", string(buf[:count]))
-		}
-
-		time.Sleep(delayBetweenSerialReads)
-	}
 }

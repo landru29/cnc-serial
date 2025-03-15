@@ -5,20 +5,16 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/landru29/serial/internal/control"
+	"github.com/landru29/serial/internal/control/nop"
+	"github.com/landru29/serial/internal/display"
 	"github.com/landru29/serial/internal/gcode"
-	"github.com/landru29/serial/internal/stack"
-	"github.com/rivo/tview"
-	"go.bug.st/serial"
 )
 
 // Client is the main application structure.
 type Client struct {
-	commandStack stack.Stack
-	port         serial.Port
-	display      *tview.Application
-	userInput    *tview.InputField
-	logArea      *tview.TextView
-	helpArea     *tview.TextView
+	commander    control.Commander
+	screen       *display.Screen
 	translations map[gcode.Language]gcode.CodeSet
 	language     gcode.Language
 }
@@ -29,7 +25,13 @@ func NewClient() (*Client, error) {
 		language: gcode.DefaultLanguage,
 	}
 
-	output.buildView()
+	output.screen = display.New(func(str string) string {
+		return output.codeDescription(str)
+	})
+
+	output.commander = nop.New(output.screen.Output())
+
+	output.screen.SetCommander(output.commander)
 
 	translations, err := gcode.ReadCodes()
 	if err != nil {
@@ -44,10 +46,6 @@ func NewClient() (*Client, error) {
 // SetLanguage sets the language.
 func (c *Client) SetLanguage(language gcode.Language) {
 	c.language = language
-}
-
-func (c Client) dryRun() bool {
-	return c.port == nil
 }
 
 func (c Client) codeDescription(code string) string {
@@ -68,4 +66,14 @@ func (c Client) AvailableLanguages() []string {
 	}
 
 	return output
+}
+
+// Start launches the tview application.
+func (c Client) Start() error {
+	return c.screen.Start()
+}
+
+// Bind is the main application loop.
+func (c Client) Bind() {
+	c.commander.Bind()
 }

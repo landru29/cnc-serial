@@ -8,6 +8,11 @@ type Stack struct {
 	currentGiven bool
 }
 
+// New creates a new stack.
+func New() *Stack {
+	return &Stack{}
+}
+
 // Push add command in the stack.
 func (s *Stack) Push(cmd string) {
 	s.content = append([]string{cmd}, s.content...)
