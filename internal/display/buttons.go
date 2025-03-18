@@ -1,12 +1,23 @@
+//go:build withbutton
+
 package display
 
 import (
 	"fmt"
 	"strings"
 
-	"github.com/landru29/serial/internal/control"
+	"github.com/landru29/cnc-serial/internal/control"
 	"github.com/rivo/tview"
 )
+
+// Screen is the main layout.
+type Screen struct {
+	xButton axisButtons
+	yButton axisButtons
+	zButton axisButtons
+
+	BaseScreen
+}
 
 type axisButtons struct {
 	down *tview.Button
@@ -78,5 +89,18 @@ func (a axisButtons) move(commander control.Commander, up bool) {
 		commands = commands[1:2]
 	}
 
-	_ = commander.Send(commands...)
+	_ = commander.PushCommands(commands...)
+}
+
+func (s *Screen) layout() *tview.Flex {
+	return tview.NewFlex().
+		AddItem(
+			tview.NewFlex().
+				SetDirection(tview.FlexRow).
+				AddItem(s.statusArea, 1, 0, false).
+				AddItem(s.logArea, 0, 8, false).  //nolint: mnd
+				AddItem(s.helpArea, 0, 2, false). //nolint: mnd
+				AddItem(s.userInput, 0, 1, true), 0, 4, true).
+		AddItem(
+			s.makeButtons(), 0, 1, false)
 }

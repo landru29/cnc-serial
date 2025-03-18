@@ -5,11 +5,22 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Start",
+            "name": "With buttons",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/serial.go",
+            "program": "${workspaceFolder}/cmd",
+            "console": "integratedTerminal",
+            "args": ["--dry-run"],
+            "buildFlags": ["-tags", "withbutton"]
+        },
+        {
+            "name": "No-buttons",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd",
+            "console": "integratedTerminal",
             "args": ["--dry-run"]
         }
     ]

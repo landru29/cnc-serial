@@ -4,10 +4,11 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/landru29/cnc-serial/internal/gcode"
 	"github.com/rivo/tview"
 )
 
-func (s *Screen) buildView(help func(string) string) {
+func (s *Screen) buildView(processer gcode.Processor) {
 	s.display = tview.NewApplication()
 
 	s.logArea = tview.NewTextView().
@@ -17,6 +18,14 @@ func (s *Screen) buildView(help func(string) string) {
 		SetChangedFunc(func() {
 			s.display.Draw()
 			s.logArea.ScrollToEnd()
+		})
+
+	s.statusArea = tview.NewTextView().
+		SetDynamicColors(true).
+		SetRegions(true).
+		SetScrollable(false).
+		SetChangedFunc(func() {
+			s.display.Draw()
 		})
 
 	s.helpArea = tview.NewTextView().
@@ -39,7 +48,7 @@ func (s *Screen) buildView(help func(string) string) {
 				return
 			}
 
-			_ = s.commander.Send(text)
+			_ = s.commander.PushCommands(text)
 
 			s.userInput.SetText("")
 		})
@@ -47,25 +56,23 @@ func (s *Screen) buildView(help func(string) string) {
 	s.userInput.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() { //nolint: exhaustive
 		case tcell.KeyUp:
-			if cmd := s.commander.CommandStack().NavigateUp(); cmd != "" {
+			if cmd := s.stackRetriever.NavigateUp(); cmd != "" {
 				s.userInput.SetText(cmd)
 			}
 		case tcell.KeyDown:
-			if cmd := s.commander.CommandStack().NavigateDown(); cmd != "" {
+			if cmd := s.stackRetriever.NavigateDown(); cmd != "" {
 				s.userInput.SetText(cmd)
 			}
 
 		default:
-			s.commander.CommandStack().ResetCursor()
+			s.stackRetriever.ResetCursor()
 		}
 
 		return event
 	})
 
 	s.userInput.SetChangedFunc(func(text string) {
-		entry := strings.Split(text, " ")
-
-		if description := help(strings.ToUpper(entry[0])); description != "" {
+		if description := processer.CodeDescription(s.currentLang, strings.Split(text, " ")[0]); description != "" {
 			s.helpArea.SetText(description)
 
 			return
@@ -77,15 +84,5 @@ func (s *Screen) buildView(help func(string) string) {
 	s.logArea.SetBorder(true)
 	s.helpArea.SetBorder(true)
 
-	flex := tview.NewFlex().
-		AddItem(
-			tview.NewFlex().
-				SetDirection(tview.FlexRow).
-				AddItem(s.logArea, 0, 8, false).  //nolint: mnd
-				AddItem(s.helpArea, 0, 2, false). //nolint: mnd
-				AddItem(s.userInput, 0, 1, true), 0, 4, true).
-		AddItem(
-			s.makeButtons(), 0, 1, false)
-
-	s.display = s.display.SetRoot(flex, true)
+	s.display = s.display.SetRoot(s.layout(), true)
 }

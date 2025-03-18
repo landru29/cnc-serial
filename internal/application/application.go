@@ -2,70 +2,50 @@
 package application
 
 import (
-	"fmt"
-	"strings"
+	"context"
+	"encoding/json"
+	"io"
 
-	"github.com/landru29/serial/internal/control"
-	"github.com/landru29/serial/internal/control/nop"
-	"github.com/landru29/serial/internal/display"
-	"github.com/landru29/serial/internal/gcode"
+	"github.com/landru29/cnc-serial/internal/display"
+	"github.com/landru29/cnc-serial/internal/gcode"
+	"github.com/landru29/cnc-serial/internal/lang"
+	"github.com/landru29/cnc-serial/internal/model"
+	"github.com/landru29/cnc-serial/internal/stack"
 )
 
 // Client is the main application structure.
 type Client struct {
-	commander    control.Commander
-	screen       *display.Screen
-	translations map[gcode.Language]gcode.CodeSet
-	language     gcode.Language
+	context   context.Context
+	transport io.Closer
+	stack     stack.Stacker
+	screen    *display.Screen
+	processer gcode.Processor
 }
 
 // NewClient initializes a new application client.
-func NewClient() (*Client, error) {
+func NewClient(ctx context.Context, stacker stack.Stacker, processer gcode.Processor) (*Client, error) {
+	screen := display.New(stacker, processer)
+
 	output := &Client{
-		language: gcode.DefaultLanguage,
+		stack:     stacker,
+		processer: processer,
+		screen:    screen,
+		context:   ctx,
 	}
 
-	output.screen = display.New(func(str string) string {
-		return output.codeDescription(str)
-	})
-
-	output.commander = nop.New(output.screen.Output())
-
-	output.screen.SetCommander(output.commander)
-
-	translations, err := gcode.ReadCodes()
-	if err != nil {
-		return nil, err
-	}
-
-	output.translations = translations
+	_ = json.NewEncoder(screen).Encode(model.Status{})
 
 	return output, nil
 }
 
 // SetLanguage sets the language.
-func (c *Client) SetLanguage(language gcode.Language) {
-	c.language = language
-}
-
-func (c Client) codeDescription(code string) string {
-	codeName := gcode.CodeName(strings.ToUpper(code))
-	if description := c.translations[c.language][codeName].Description; description != "" {
-		return fmt.Sprintf("%s - %s", codeName, description)
-	}
-
-	return ""
+func (c *Client) SetLanguage(language lang.Language) {
+	c.screen.SetLanguage(language)
 }
 
 // AvailableLanguages lists all available languages.
-func (c Client) AvailableLanguages() []string {
-	output := []string{}
-
-	for lang := range c.translations {
-		output = append(output, string(lang))
-	}
-
-	return output
+func (c Client) AvailableLanguages() []lang.Language {
+	return c.processer.AvailableLanguages()
 }
 
 // Start launches the tview application.
@@ -73,7 +53,7 @@ func (c Client) Start() error {
 	return c.screen.Start()
 }
 
-// Bind is the main application loop.
-func (c Client) Bind() {
-	c.commander.Bind()
+// Write implements the io.Writer interface.
+func (c Client) Write(p []byte) (n int, err error) {
+	return c.screen.Write(p)
 }

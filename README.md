@@ -27,3 +27,36 @@ Flags:
   -l, --lang lang      language (available: en, fr) (default en)
   -p, --port string    Port name
 ```
+
+## Architecture
+
+```mermaid
+graph TD;
+    GCodeProcessor(**GCodeProcessor**
+    process G-Code);
+    Transporter(**Transporter**
+    transport command to CNC);
+    Stacker(**Stacker**
+    remember previous commands
+    );
+    Controller(**Controller**
+    orchestrate processus
+    );
+    Screen(**Screen**
+    Layout display
+    );
+    Application(**Application**
+    main entrypoint);
+
+    Application-->Controller;
+    Application-->GCodeProcessor;
+    Application-->Screen;
+    Controller-->Stacker;
+    Controller-->GCodeProcessor;
+    Controller-->Transporter;
+    Transporter-->serial([serial]);
+    Transporter-->nop([nop]);
+    Screen-->Controller;
+    Controller-->Screen;
+    Screen-->Stacker;
+```
