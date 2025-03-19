@@ -4,6 +4,7 @@ package display
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/landru29/cnc-serial/internal/control"
 	"github.com/landru29/cnc-serial/internal/gcode"
@@ -24,6 +25,7 @@ type BaseScreen struct {
 	commander      control.Commander
 	stackRetriever stack.Retriever
 	currentLang    lang.Language
+	bufferData     string
 }
 
 // New creates a screen.
@@ -45,16 +47,34 @@ func (s *Screen) Start() error {
 }
 
 // Write implements the io.Writer interface.
-func (s Screen) Write(p []byte) (n int, err error) {
-	var status model.Status
-	if err := json.Unmarshal(p, &status); err == nil {
-		text := fmt.Sprintf("X: %03.1f\t\tY: %03.1f\t\tZ: %03.1f", status.XCoordinate, status.YCoordinate, status.ZCoordinate)
-		s.statusArea.SetText(text)
+func (s *Screen) Write(data []byte) (int, error) {
+	s.bufferData += string(data)
 
-		return len(text), nil
+	splitter := strings.Split(s.bufferData, "\n")
+	if len(splitter) < 2 { //nolint: mnd
+		return len(data), nil
 	}
 
-	return s.logArea.Write(p)
+	for _, line := range splitter {
+		var status model.Status
+		if err := json.Unmarshal([]byte(line), &status); err == nil {
+			text := fmt.Sprintf(
+				"X: %03.1f\t\tY: %03.1f\t\tZ: %03.1f",
+				status.Machine.XCoordinate,
+				status.Machine.YCoordinate,
+				status.Machine.ZCoordinate,
+			)
+			s.statusArea.SetText(text)
+
+			continue
+		}
+
+		_, _ = s.logArea.Write([]byte(line))
+	}
+
+	s.bufferData = splitter[len(splitter)-1]
+
+	return len(data), nil
 }
 
 // SetCommandSender sets the way to send commands.

@@ -10,7 +10,7 @@ type Transporter interface {
 }
 
 // TransportCloser is a Transporter that can be closed.
-type TransportCloser interface {
+type TransportCloser interface { //nolint: revive
 	io.Closer
 	Transporter
 }

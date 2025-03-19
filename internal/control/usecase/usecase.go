@@ -1,3 +1,4 @@
+// Package usecase is the control.Commander implementation.
 package usecase
 
 import (
@@ -21,6 +22,7 @@ const (
 	delayBetweenSerialReads = 500 * time.Millisecond
 )
 
+// Controller is the control.Commander implementation.
 type Controller struct {
 	coordinateRelative bool
 	display            []io.Writer
@@ -30,7 +32,14 @@ type Controller struct {
 	mutex              sync.Mutex
 }
 
-func New(ctx context.Context, stackPusher stack.Pusher, transporter transport.Transporter, processer gcode.Processor, display ...io.Writer) *Controller {
+// New creates the controller.
+func New(
+	ctx context.Context,
+	stackPusher stack.Pusher,
+	transporter transport.Transporter,
+	processer gcode.Processor,
+	display ...io.Writer,
+) *Controller {
 	output := &Controller{
 		stackPusher: stackPusher,
 		display:     display,
@@ -43,7 +52,7 @@ func New(ctx context.Context, stackPusher stack.Pusher, transporter transport.Tr
 	}()
 
 	go func() {
-		ticker := time.NewTicker(time.Second * 2)
+		ticker := time.NewTicker(time.Second * 2) //nolint: mnd
 
 		for {
 			select {
@@ -58,6 +67,7 @@ func New(ctx context.Context, stackPusher stack.Pusher, transporter transport.Tr
 	return output
 }
 
+// PushCommands implements the control.Commander interface.
 func (c *Controller) PushCommands(commands ...string) error {
 	c.mutex.Lock()
 	defer func() {
@@ -95,6 +105,7 @@ func (c *Controller) IsRelative() bool {
 
 func (c *Controller) bind(ctx context.Context) {
 	bufferline := ""
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -112,7 +123,9 @@ func (c *Controller) bind(ctx context.Context) {
 					_, _ = fmt.Fprintf(display, " [#ff0000]ERR %s\n", err.Error())
 				default:
 					bufferline += string(buf[:count])
+
 					lineSplitter := strings.Split(bufferline, "\n")
+
 					if len(lineSplitter) > 1 {
 						for idx := 0; idx < len(lineSplitter)-1; idx++ {
 							_, _ = fmt.Fprintf(display, " [#00ff00]%s", c.processResponse(lineSplitter[idx]))
@@ -125,17 +138,19 @@ func (c *Controller) bind(ctx context.Context) {
 
 			time.Sleep(delayBetweenSerialReads)
 		}
-
 	}
 }
 
 func (c *Controller) processResponse(resp string) string {
-	if status, err := c.processer.CoordinateFromStatus(resp); err != nil {
+	if status, err := c.processer.UnmarshalStatus(resp); err != nil {
 		for _, display := range c.display {
-			_ = json.NewEncoder(display).Encode(status)
+			_ = json.NewEncoder(display).Encode(status) //nolint: errchkjson
+
+			_, _ = display.Write([]byte("\n"))
 		}
+
 		return ""
 	}
 
-	return resp
+	return resp + "\n"
 }

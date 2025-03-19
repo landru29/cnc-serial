@@ -1,3 +1,4 @@
+// Package grbl manages GERBIL specificities.
 package grbl
 
 import (
@@ -17,9 +18,12 @@ var dataFS embed.FS
 
 var _ gcode.Processor = &Gerbil{}
 
+// Gerbil is the GERBIL standard.
 type Gerbil struct {
-	helper           map[lang.Language]CodeSet
-	coordinateRegexp *regexp.Regexp
+	helper         map[lang.Language]CodeSet
+	stateRegexp    *regexp.Regexp
+	argumentRegexp *regexp.Regexp
+	numberRegexp   *regexp.Regexp
 }
 
 // CodeDescription implements the Helper interface.
@@ -54,12 +58,26 @@ func New() (*Gerbil, error) {
 		helper: map[lang.Language]CodeSet{},
 	}
 
-	coordinateRegexp, err := regexp.Compile(`([+-]?\d*\.\d*)[^\d^+^-]([+-]?\d*\.\d*)[^\d^+^-]([+-]?\d*\.\d*)`)
+	stateRegexp, err := regexp.Compile(`^([a-zA-Z]+)`) //nolint: gocritic
 	if err != nil {
 		return nil, err
 	}
 
-	output.coordinateRegexp = coordinateRegexp
+	output.stateRegexp = stateRegexp
+
+	argumentRegexp, err := regexp.Compile(`^([a-zA-Z]+)`) //nolint: gocritic
+	if err != nil {
+		return nil, err
+	}
+
+	output.argumentRegexp = argumentRegexp
+
+	numberRegexp, err := regexp.Compile(`^([+-]?[0-9]+(\.[0-9]+)?)`) //nolint: gocritic
+	if err != nil {
+		return nil, err
+	}
+
+	output.numberRegexp = numberRegexp
 
 	if errWalk := fs.WalkDir(dataFS, ".", func(pathName string, entry fs.DirEntry, pathErr error) error {
 		if pathErr != nil {

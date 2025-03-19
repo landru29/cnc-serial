@@ -32,6 +32,13 @@ linters:
 
 issues:
   exclude-use-default: false
+  exclude-rules:
+    - path: .*\.go
+      text: "`processer` is a misspelling of `processor`"
+
+    - path: .*_test\.go
+      linters:
+        - lll
 
 severity:
   default-severity: error

@@ -12,5 +12,5 @@ type Processor interface {
 	AvailableLanguages() []lang.Language
 	Colorize(text string) string
 	BuildStatusRequest() string
-	CoordinateFromStatus(statusString string) (*model.Status, error)
+	UnmarshalStatus(statusString string) (*model.Status, error)
 }

@@ -48,6 +48,6 @@ func (c Client) Close() error {
 }
 
 // Read implements the io.Reader interface.
-func (c Client) Read(p []byte) (n int, err error) {
+func (c Client) Read(p []byte) (int, error) {
 	return c.port.Read(p)
 }

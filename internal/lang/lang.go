@@ -1,3 +1,4 @@
+// Package lang is the language management.
 package lang
 
 // Language is the user language.

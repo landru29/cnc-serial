@@ -15,7 +15,7 @@ import (
 
 // Client is the main application structure.
 type Client struct {
-	context   context.Context
+	context   context.Context //nolint: containedctx
 	transport io.Closer
 	stack     stack.Stacker
 	screen    *display.Screen
@@ -33,7 +33,9 @@ func NewClient(ctx context.Context, stacker stack.Stacker, processer gcode.Proce
 		context:   ctx,
 	}
 
-	_ = json.NewEncoder(screen).Encode(model.Status{})
+	if err := json.NewEncoder(screen).Encode(model.Status{}); err != nil {
+		return nil, err
+	}
 
 	return output, nil
 }
@@ -54,6 +56,6 @@ func (c Client) Start() error {
 }
 
 // Write implements the io.Writer interface.
-func (c Client) Write(p []byte) (n int, err error) {
+func (c Client) Write(p []byte) (int, error) {
 	return c.screen.Write(p)
 }

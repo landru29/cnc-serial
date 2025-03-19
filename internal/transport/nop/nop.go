@@ -18,7 +18,7 @@ func New() *Client {
 }
 
 // Send implements the Transport.Transporter interface.
-func (c *Client) Send(texts ...string) error {
+func (c *Client) Send(_ ...string) error {
 	return nil
 }
 
@@ -28,6 +28,6 @@ func (c Client) Close() error {
 }
 
 // Read implements the io.Reader interface.
-func (c Client) Read(p []byte) (n int, err error) {
+func (c Client) Read(_ []byte) (int, error) {
 	return 0, io.EOF
 }
