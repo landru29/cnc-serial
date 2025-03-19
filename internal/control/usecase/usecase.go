@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/landru29/cnc-serial/internal/gcode"
+	"github.com/landru29/cnc-serial/internal/model"
 	"github.com/landru29/cnc-serial/internal/stack"
 	"github.com/landru29/cnc-serial/internal/transport"
 )
@@ -20,6 +21,8 @@ const (
 	bufferSize = 200
 
 	delayBetweenSerialReads = 500 * time.Millisecond
+
+	delayBetweenStatusRequest = time.Second
 )
 
 // Controller is the control.Commander implementation.
@@ -30,6 +33,7 @@ type Controller struct {
 	transporter        transport.Transporter
 	processer          gcode.Processor
 	mutex              sync.Mutex
+	status             model.Status
 }
 
 // New creates the controller.
@@ -52,7 +56,7 @@ func New(
 	}()
 
 	go func() {
-		ticker := time.NewTicker(time.Second * 2) //nolint: mnd
+		ticker := time.NewTicker(delayBetweenStatusRequest)
 
 		for {
 			select {
@@ -92,7 +96,9 @@ func (c *Controller) PushCommands(commands ...string) error {
 			c.coordinateRelative = false
 		}
 
-		c.stackPusher.Push(strings.ToUpper(text))
+		if text != c.processer.BuildStatusRequest() {
+			c.stackPusher.Push(strings.ToUpper(text))
+		}
 	}
 
 	return nil
@@ -103,7 +109,7 @@ func (c *Controller) IsRelative() bool {
 	return c.coordinateRelative
 }
 
-func (c *Controller) bind(ctx context.Context) {
+func (c *Controller) bind(ctx context.Context) { //nolint: gocognit
 	bufferline := ""
 
 	for {
@@ -115,24 +121,31 @@ func (c *Controller) bind(ctx context.Context) {
 
 			count, err := c.transporter.Read(buf)
 
-			for _, display := range c.display {
-				switch {
-				case errors.Is(err, io.EOF):
-					// Do nothing
-				case err != nil:
+			switch {
+			case errors.Is(err, io.EOF):
+				// Do nothing
+			case err != nil:
+				for _, display := range c.display {
 					_, _ = fmt.Fprintf(display, " [#ff0000]ERR %s\n", err.Error())
-				default:
-					bufferline += string(buf[:count])
+				}
+			default:
+				bufferline += string(buf[:count])
 
-					lineSplitter := strings.Split(bufferline, "\n")
+				lineSplitter := strings.Split(bufferline, "\n")
 
-					if len(lineSplitter) > 1 {
-						for idx := 0; idx < len(lineSplitter)-1; idx++ {
-							_, _ = fmt.Fprintf(display, " [#00ff00]%s", c.processResponse(lineSplitter[idx]))
+				if len(lineSplitter) > 1 {
+					for idx := 0; idx < len(lineSplitter)-1; idx++ {
+						out := c.processResponse(lineSplitter[idx])
+						if out == "" {
+							continue
 						}
 
-						bufferline = lineSplitter[len(lineSplitter)-1]
+						for _, display := range c.display {
+							_, _ = fmt.Fprintf(display, " [#00ff00]%s\n", out)
+						}
 					}
+
+					bufferline = lineSplitter[len(lineSplitter)-1]
 				}
 			}
 
@@ -142,15 +155,22 @@ func (c *Controller) bind(ctx context.Context) {
 }
 
 func (c *Controller) processResponse(resp string) string {
-	if status, err := c.processer.UnmarshalStatus(resp); err != nil {
-		for _, display := range c.display {
-			_ = json.NewEncoder(display).Encode(status) //nolint: errchkjson
-
-			_, _ = display.Write([]byte("\n"))
-		}
-
+	if strings.TrimSpace(resp) == "ok" {
 		return ""
 	}
 
-	return resp + "\n"
+	status, err := c.processer.UnmarshalStatus(resp)
+	if err != nil {
+		return resp + "\n"
+	}
+
+	c.status.Merge(*status)
+
+	for _, display := range c.display {
+		_ = json.NewEncoder(display).Encode(c.status) //nolint: errchkjson
+
+		_, _ = display.Write([]byte("\n"))
+	}
+
+	return ""
 }

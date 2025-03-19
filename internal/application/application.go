@@ -33,7 +33,11 @@ func NewClient(ctx context.Context, stacker stack.Stacker, processer gcode.Proce
 		context:   ctx,
 	}
 
-	if err := json.NewEncoder(screen).Encode(model.Status{}); err != nil {
+	if err := json.NewEncoder(screen).Encode(model.Status{
+		Machine:    &model.Coordinates{},
+		ToolOffset: &model.Coordinates{},
+		State:      model.State("Waiting"),
+	}); err != nil {
 		return nil, err
 	}
 

@@ -21,10 +21,9 @@ linters:
     - depguard
     - godox
     - maintidx
+    - recvcheck
 # Deprecated
-    - exportloopref
-    - execinquery
-    - gomnd
+    - tenv
 # Not supported by go 1.18
     - copyloopvar
     - intrange

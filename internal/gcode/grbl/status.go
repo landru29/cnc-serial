@@ -60,6 +60,8 @@ func (g Gerbil) decodeNext(statusString string, output *model.Status) string { /
 	// process arguments.
 	switch strings.ToLower(argMatch[0][1]) {
 	case "mpos":
+		output.Machine = &model.Coordinates{}
+
 		if statusString, output.Machine.XCoordinate, err = g.readNumber(statusString); err != nil {
 			return ""
 		}
@@ -73,6 +75,8 @@ func (g Gerbil) decodeNext(statusString string, output *model.Status) string { /
 		}
 
 	case "wpos":
+		output.Tool = &model.Coordinates{}
+
 		if statusString, output.Tool.XCoordinate, err = g.readNumber(statusString); err != nil {
 			return ""
 		}
@@ -86,15 +90,19 @@ func (g Gerbil) decodeNext(statusString string, output *model.Status) string { /
 		}
 
 	case "fs":
-		if statusString, output.FeedRate, err = g.readNumber(statusString); err != nil {
+		output.Speed = &model.Speed{}
+
+		if statusString, output.Speed.FeedRate, err = g.readNumber(statusString); err != nil {
 			return ""
 		}
 
-		if statusString, output.SpindleSpeed, err = g.readNumber(statusString); err != nil {
+		if statusString, output.Speed.Spindle, err = g.readNumber(statusString); err != nil {
 			return ""
 		}
 
 	case "wco":
+		output.ToolOffset = &model.Coordinates{}
+
 		if statusString, output.ToolOffset.XCoordinate, err = g.readNumber(statusString); err != nil {
 			return ""
 		}
@@ -113,7 +121,14 @@ func (g Gerbil) decodeNext(statusString string, output *model.Status) string { /
 			return ""
 		}
 
-		output.Alarm = model.Alarm(alarm)
+		casted := model.Alarm(alarm)
+
+		output.Alarm = &casted
+
+	case "pn":
+		for len(statusString) > 0 && ((statusString[0] > 'a' && statusString[0] < 'z') || (statusString[0] > 'A' && statusString[0] < 'Z')) {
+			statusString = statusString[1:]
+		}
 
 	default:
 		return ""

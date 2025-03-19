@@ -58,18 +58,23 @@ func (s *Screen) Write(data []byte) (int, error) {
 	for _, line := range splitter {
 		var status model.Status
 		if err := json.Unmarshal([]byte(line), &status); err == nil {
+			coordinates := status.ToolCoordinates()
+
 			text := fmt.Sprintf(
-				"X: %03.1f\t\tY: %03.1f\t\tZ: %03.1f",
-				status.Machine.XCoordinate,
-				status.Machine.YCoordinate,
-				status.Machine.ZCoordinate,
+				"%s\tX: %03.1f\t\tY: %03.1f\t\tZ: %03.1f",
+				status.CurrentState(),
+				coordinates.XCoordinate,
+				coordinates.YCoordinate,
+				coordinates.ZCoordinate,
 			)
 			s.statusArea.SetText(text)
 
 			continue
 		}
 
-		_, _ = s.logArea.Write([]byte(line))
+		if line != "" {
+			_, _ = s.logArea.Write([]byte(line + "\n"))
+		}
 	}
 
 	s.bufferData = splitter[len(splitter)-1]
