@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/landru29/cnc-serial/internal/application"
 	"github.com/landru29/cnc-serial/internal/gcode/grbl"
@@ -116,7 +118,19 @@ func main() {
 		panic(err)
 	}
 
-	if err := cmd.ExecuteContext(context.Background()); err != nil {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	signalCh := make(chan os.Signal, 1)
+	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		<-signalCh
+
+		cancel()
+	}()
+
+	if err := cmd.ExecuteContext(ctx); err != nil {
 		panic(err)
 	}
 }

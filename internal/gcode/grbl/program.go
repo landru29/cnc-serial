@@ -62,6 +62,10 @@ func (p Program) Content() string {
 
 // ReadNextInstruction move the pointer to the next instruction and read it.
 func (p *Program) ReadNextInstruction() (string, error) {
+	if p == nil || p.buffer == nil {
+		return "", nil
+	}
+
 	if err := p.skipComments(); err != nil {
 		return "", err
 	}
