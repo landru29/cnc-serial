@@ -20,6 +20,15 @@ func (s *Screen) buildView(processer gcode.Processor) {
 			s.logArea.ScrollToEnd()
 		})
 
+	s.progArea = tview.NewTextView().
+		SetDynamicColors(true).
+		SetRegions(true).
+		SetScrollable(true).
+		SetChangedFunc(func() {
+			s.display.Draw()
+			s.logArea.ScrollToEnd()
+		})
+
 	s.statusArea = tview.NewTextView().
 		SetDynamicColors(true).
 		SetRegions(true).
@@ -83,6 +92,7 @@ func (s *Screen) buildView(processer gcode.Processor) {
 
 	s.logArea.SetBorder(true)
 	s.helpArea.SetBorder(true)
+	s.progArea.SetBorder(true)
 
 	s.display = s.display.SetRoot(s.layout(), true)
 }

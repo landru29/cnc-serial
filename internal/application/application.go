@@ -3,9 +3,10 @@ package application
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 
+	"github.com/landru29/cnc-serial/internal/control"
+	"github.com/landru29/cnc-serial/internal/control/usecase"
 	"github.com/landru29/cnc-serial/internal/display"
 	"github.com/landru29/cnc-serial/internal/gcode"
 	"github.com/landru29/cnc-serial/internal/lang"
@@ -20,10 +21,12 @@ type Client struct {
 	stack     stack.Stacker
 	screen    *display.Screen
 	processer gcode.Processor
+	program   gcode.Programmer
+	commander control.Commander
 }
 
 // NewClient initializes a new application client.
-func NewClient(ctx context.Context, stacker stack.Stacker, processer gcode.Processor) (*Client, error) {
+func NewClient(ctx context.Context, stacker stack.Stacker, processer gcode.Processor, program gcode.Programmer) (*Client, error) {
 	screen := display.New(stacker, processer)
 
 	output := &Client{
@@ -31,13 +34,31 @@ func NewClient(ctx context.Context, stacker stack.Stacker, processer gcode.Proce
 		processer: processer,
 		screen:    screen,
 		context:   ctx,
+		program:   program,
 	}
 
-	if err := json.NewEncoder(screen).Encode(model.Status{
+	output.commander = usecase.New(ctx, stacker, processer, output)
+
+	if program != nil {
+		if _, err := program.ReadNextInstruction(); err != nil {
+			return nil, err
+		}
+
+		output.commander.SetProgrammer(program)
+
+		model := program.ToModel()
+		if model != nil {
+			if err := model.Encode(screen); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if err := (model.Status{
 		Machine:    &model.Coordinates{},
 		ToolOffset: &model.Coordinates{},
 		State:      model.State("Waiting"),
-	}); err != nil {
+	}.Encode(screen)); err != nil {
 		return nil, err
 	}
 

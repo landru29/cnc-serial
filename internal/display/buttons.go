@@ -3,7 +3,6 @@
 package display
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/landru29/cnc-serial/internal/control"
@@ -26,7 +25,7 @@ type axisButtons struct {
 }
 
 func (s *Screen) makeButtons() tview.Primitive { //nolint: ireturn
-	s.xButton = s.newAxisButton("x", "←x", "x→")
+	s.xButton = s.newAxisButton("x", "x→", "←x")
 	s.yButton = s.newAxisButton("y", "y↑", "↓y")
 	s.zButton = s.newAxisButton("z", "z↑", "↓z")
 
@@ -52,8 +51,6 @@ func (s *Screen) makeButtons() tview.Primitive { //nolint: ireturn
 		AddItem(xyGrid, 0, 0, 1, 1, 0, 0, false).
 		AddItem(zGrid, 1, 0, 1, 1, 0, 0, false)
 
-	output.SetBorder(true)
-
 	return output
 }
 
@@ -72,24 +69,19 @@ func (s *Screen) newAxisButton(name string, up string, down string) axisButtons 
 	})
 
 	output.down.SetSelectedFunc(func() {
-		output.move(s.commander, true)
+		output.move(s.commander, false)
 	})
 
 	return output
 }
 
 func (a axisButtons) move(commander control.Commander, up bool) {
-	commands := []string{
-		"G91",
-		fmt.Sprintf("G1 %s%s10", a.name, map[bool]string{true: "+", false: "-"}[up]),
-		"G90",
+	step := 10.0
+	if !up {
+		step *= -1.0
 	}
 
-	if commander.IsRelative() {
-		commands = commands[1:2]
-	}
-
-	_ = commander.PushCommands(commands...)
+	_ = commander.MoveRelative(step, a.name)
 }
 
 func (s *Screen) layout() *tview.Flex {
@@ -98,7 +90,10 @@ func (s *Screen) layout() *tview.Flex {
 			tview.NewFlex().
 				SetDirection(tview.FlexRow).
 				AddItem(s.statusArea, 1, 0, false).
-				AddItem(s.logArea, 0, 8, false).  //nolint: mnd
+				AddItem(tview.NewFlex().
+					AddItem(s.logArea, 0, 1, false).
+					AddItem(s.progArea, 0, 1, false),
+									0, 8, false).
 				AddItem(s.helpArea, 0, 2, false). //nolint: mnd
 				AddItem(s.userInput, 0, 1, true), 0, 4, true).
 		AddItem(

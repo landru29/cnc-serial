@@ -4,6 +4,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 
 	"github.com/landru29/cnc-serial/internal/application"
@@ -23,6 +25,7 @@ func mainCommand() (*cobra.Command, error) {
 		bitRate  int
 		dryRun   bool
 		language = lang.DefaultLanguage
+		program  *grbl.Program
 	)
 
 	stacker := memory.New()
@@ -33,15 +36,31 @@ func mainCommand() (*cobra.Command, error) {
 	}
 
 	output := &cobra.Command{
-		Use:   "serial",
+		Use:   "serial [filename]",
 		Short: "Serial monitor",
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := context.WithCancel(cmd.Context())
 			defer func() {
 				cancel()
 			}()
 
-			app, err := application.NewClient(ctx, stacker, gerbil)
+			if len(args) > 0 {
+				file, err := os.Open(args[0])
+				if err != nil {
+					return err
+				}
+
+				defer func(closer io.Closer) {
+					_ = closer.Close()
+				}(file)
+
+				program, err = grbl.NewProgram(file)
+				if err != nil {
+					return err
+				}
+			}
+
+			app, err := application.NewClient(ctx, stacker, gerbil, program)
 			if err != nil {
 				return err
 			}

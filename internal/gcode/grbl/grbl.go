@@ -13,7 +13,7 @@ import (
 	"github.com/landru29/cnc-serial/internal/lang"
 )
 
-//go:embed *.json
+//go:embed lang/*.json
 var dataFS embed.FS
 
 var _ gcode.Processor = &Gerbil{}

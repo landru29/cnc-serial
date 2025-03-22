@@ -3,14 +3,13 @@ package usecase
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/landru29/cnc-serial/internal/control"
 	"github.com/landru29/cnc-serial/internal/gcode"
 	"github.com/landru29/cnc-serial/internal/model"
 	"github.com/landru29/cnc-serial/internal/stack"
@@ -25,29 +24,31 @@ const (
 	delayBetweenStatusRequest = time.Second
 )
 
+var _ control.Commander = &Controller{}
+
 // Controller is the control.Commander implementation.
 type Controller struct {
-	coordinateRelative bool
-	display            []io.Writer
-	stackPusher        stack.Pusher
-	transporter        transport.Transporter
-	processer          gcode.Processor
-	mutex              sync.Mutex
-	status             model.Status
+	displayList         []io.Writer
+	stackPusher         stack.Pusher
+	transporter         transport.Transporter
+	transporterSetMutex sync.Mutex
+	processer           gcode.Processor
+	pushMutex           sync.Mutex
+	status              model.Status
+	programmer          gcode.Programmer
+	programmerSetMutex  sync.Mutex
 }
 
 // New creates the controller.
 func New(
 	ctx context.Context,
 	stackPusher stack.Pusher,
-	transporter transport.Transporter,
 	processer gcode.Processor,
-	display ...io.Writer,
+	displayList ...io.Writer,
 ) *Controller {
 	output := &Controller{
 		stackPusher: stackPusher,
-		display:     display,
-		transporter: transporter,
+		displayList: displayList,
 		processer:   processer,
 	}
 
@@ -63,7 +64,7 @@ func New(
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				_ = output.PushCommands(processer.BuildStatusRequest())
+				_ = output.PushCommands(processer.CommandStatus())
 			}
 		}
 	}()
@@ -71,17 +72,49 @@ func New(
 	return output
 }
 
-// PushCommands implements the control.Commander interface.
-func (c *Controller) PushCommands(commands ...string) error {
-	c.mutex.Lock()
+func (c *Controller) SetTransporter(transporter transport.Transporter) {
+	c.transporterSetMutex.Lock()
 	defer func() {
-		c.mutex.Unlock()
+		c.transporterSetMutex.Unlock()
 	}()
 
+	c.transporter = transporter
+}
+
+func (c *Controller) SetProgrammer(programmer gcode.Programmer) {
+	c.programmerSetMutex.Lock()
+	defer func() {
+		c.programmerSetMutex.Unlock()
+	}()
+
+	c.programmer = programmer
+}
+
+// PushCommands implements the control.Commander interface.
+func (c *Controller) PushCommands(commands ...string) error {
+	c.pushMutex.Lock()
+	c.transporterSetMutex.Lock()
+	defer func() {
+		c.pushMutex.Unlock()
+		c.transporterSetMutex.Unlock()
+	}()
+
+	if c.transporter == nil {
+		return errors.New("missing transporter")
+	}
+
 	for _, text := range commands {
-		for _, display := range c.display {
-			if text != c.processer.BuildStatusRequest() {
-				_, _ = fmt.Fprintf(display, " > %s\n", c.processer.Colorize(text))
+		if strings.TrimSpace(text) == "" {
+			if err := c.stepProgram(); err != nil {
+				return err
+			}
+
+			continue
+		}
+
+		for _, display := range c.displayList {
+			if text != c.processer.CommandStatus() {
+				model.NewRequest(c.processer.Colorize(text)).Encode(display)
 			}
 		}
 
@@ -90,13 +123,19 @@ func (c *Controller) PushCommands(commands ...string) error {
 		}
 
 		switch strings.ToUpper(strings.Split(text, " ")[0]) {
-		case "G91":
-			c.coordinateRelative = true
-		case "G90":
-			c.coordinateRelative = false
+		case c.processer.CommandRelativeCoordinate():
+			c.status.RelativeCoordinates = true
+
+			_ = c.displayStatus()
+
+		case c.processer.CommandAbsoluteCoordinate():
+			c.status.RelativeCoordinates = false
+
+			_ = c.displayStatus()
+
 		}
 
-		if text != c.processer.BuildStatusRequest() {
+		if text != c.processer.CommandStatus() {
 			c.stackPusher.Push(strings.ToUpper(text))
 		}
 	}
@@ -104,9 +143,36 @@ func (c *Controller) PushCommands(commands ...string) error {
 	return nil
 }
 
-// IsRelative implements the control.Commander interface.
-func (c *Controller) IsRelative() bool {
-	return c.coordinateRelative
+func (c *Controller) stepProgram() error {
+	c.programmerSetMutex.Lock()
+	defer c.programmerSetMutex.Unlock()
+
+	if c.programmer == nil {
+		return nil
+	}
+
+	currentCommand := c.programmer.CurrentCommand()
+
+	if _, err := c.programmer.ReadNextInstruction(); err != nil {
+		return err
+	}
+
+	for _, display := range c.displayList {
+		model.NewRequest(c.processer.Colorize(currentCommand)).Encode(display)
+
+		model := c.programmer.ToModel()
+		if model != nil {
+			if err := model.Encode(display); err != nil {
+				return err
+			}
+		}
+	}
+
+	if err := c.transporter.Send(currentCommand); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *Controller) bind(ctx context.Context) { //nolint: gocognit
@@ -117,16 +183,24 @@ func (c *Controller) bind(ctx context.Context) { //nolint: gocognit
 		case <-ctx.Done():
 			return
 		default:
+			c.transporterSetMutex.Lock()
+
+			if c.transporter == nil {
+				c.transporterSetMutex.Unlock()
+				continue
+			}
+
 			buf := make([]byte, bufferSize)
 
 			count, err := c.transporter.Read(buf)
+			c.transporterSetMutex.Unlock()
 
 			switch {
 			case errors.Is(err, io.EOF):
 				// Do nothing
 			case err != nil:
-				for _, display := range c.display {
-					_, _ = fmt.Fprintf(display, " [#ff0000]ERR %s\n", err.Error())
+				for _, display := range c.displayList {
+					model.NewResponse(err.Error(), true).Encode(display)
 				}
 			default:
 				bufferline += string(buf[:count])
@@ -140,8 +214,8 @@ func (c *Controller) bind(ctx context.Context) { //nolint: gocognit
 							continue
 						}
 
-						for _, display := range c.display {
-							_, _ = fmt.Fprintf(display, " [#00ff00]%s\n", out)
+						for _, display := range c.displayList {
+							model.NewResponse(out, false).Encode(display)
 						}
 					}
 
@@ -166,11 +240,32 @@ func (c *Controller) processResponse(resp string) string {
 
 	c.status.Merge(*status)
 
-	for _, display := range c.display {
-		_ = json.NewEncoder(display).Encode(c.status) //nolint: errchkjson
-
-		_, _ = display.Write([]byte("\n"))
-	}
+	_ = c.displayStatus()
 
 	return ""
+}
+
+func (c *Controller) displayStatus() error {
+	for _, display := range c.displayList {
+		if err := c.status.Encode(display); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// MoveRelative implements the control.Commander interface.
+func (c *Controller) MoveRelative(offset float64, axisName string) error {
+	commands := []string{
+		c.processer.CommandRelativeCoordinate(),
+		c.processer.MoveAxis(offset, axisName),
+		c.processer.CommandAbsoluteCoordinate(),
+	}
+
+	if c.status.RelativeCoordinates {
+		commands = commands[1:2]
+	}
+
+	return c.PushCommands(commands...)
 }

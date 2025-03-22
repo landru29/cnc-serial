@@ -1,3 +1,7 @@
+.PHONY: cnc-serial cnc-serial-minimal all
+
+all: cnc-serial cnc-serial-minimal
+
 cnc-serial:
 	go build --tags withbutton -o cnc-serial ./cmd/...
 

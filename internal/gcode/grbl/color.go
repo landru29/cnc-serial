@@ -6,7 +6,7 @@ import (
 
 // Colorize applies the syntax highlighting.
 func (g Gerbil) Colorize(text string) string {
-	splitter := strings.Split(strings.ToUpper(text), " ")
+	splitter := strings.Split(strings.ToUpper(strings.TrimSpace(text)), " ")
 	newSplitter := make([]string, len(splitter))
 
 	for idx, word := range splitter {

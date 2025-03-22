@@ -151,8 +151,3 @@ func (g Gerbil) readNumber(statusString string) (string, float64, error) {
 
 	return statusString[len(match[0][1]):], out, err
 }
-
-// BuildStatusRequest implements the gcode.Processor interface.
-func (g Gerbil) BuildStatusRequest() string {
-	return "?"
-}

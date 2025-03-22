@@ -2,14 +2,11 @@
 package display
 
 import (
-	"encoding/json"
-	"fmt"
-	"strings"
+	"sync"
 
 	"github.com/landru29/cnc-serial/internal/control"
 	"github.com/landru29/cnc-serial/internal/gcode"
 	"github.com/landru29/cnc-serial/internal/lang"
-	"github.com/landru29/cnc-serial/internal/model"
 	"github.com/landru29/cnc-serial/internal/stack"
 	"github.com/rivo/tview"
 )
@@ -19,6 +16,7 @@ type BaseScreen struct {
 	display    *tview.Application
 	userInput  *tview.InputField
 	logArea    *tview.TextView
+	progArea   *tview.TextView
 	helpArea   *tview.TextView
 	statusArea *tview.TextView
 
@@ -26,6 +24,7 @@ type BaseScreen struct {
 	stackRetriever stack.Retriever
 	currentLang    lang.Language
 	bufferData     string
+	bufferMutex    sync.Mutex
 }
 
 // New creates a screen.
@@ -44,42 +43,6 @@ func New(stackRetriever stack.Retriever, processer gcode.Processor) *Screen {
 // Start launches the tview application.
 func (s *Screen) Start() error {
 	return s.display.EnableMouse(true).Run()
-}
-
-// Write implements the io.Writer interface.
-func (s *Screen) Write(data []byte) (int, error) {
-	s.bufferData += string(data)
-
-	splitter := strings.Split(s.bufferData, "\n")
-	if len(splitter) < 2 { //nolint: mnd
-		return len(data), nil
-	}
-
-	for _, line := range splitter {
-		var status model.Status
-		if err := json.Unmarshal([]byte(line), &status); err == nil {
-			coordinates := status.ToolCoordinates()
-
-			text := fmt.Sprintf(
-				"%s\tX: %03.1f\t\tY: %03.1f\t\tZ: %03.1f",
-				status.CurrentState(),
-				coordinates.XCoordinate,
-				coordinates.YCoordinate,
-				coordinates.ZCoordinate,
-			)
-			s.statusArea.SetText(text)
-
-			continue
-		}
-
-		if line != "" {
-			_, _ = s.logArea.Write([]byte(line + "\n"))
-		}
-	}
-
-	s.bufferData = splitter[len(splitter)-1]
-
-	return len(data), nil
 }
 
 // SetCommandSender sets the way to send commands.

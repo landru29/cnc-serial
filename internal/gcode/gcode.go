@@ -11,6 +11,18 @@ type Processor interface {
 	CodeDescription(lang lang.Language, code string) string
 	AvailableLanguages() []lang.Language
 	Colorize(text string) string
-	BuildStatusRequest() string
 	UnmarshalStatus(statusString string) (*model.Status, error)
+	MoveAxis(offset float64, axisName string) string
+	CommandStatus() string
+	CommandAbsoluteCoordinate() string
+	CommandRelativeCoordinate() string
+}
+
+// Programmer is the program interface.
+type Programmer interface {
+	CurrentLine() int
+	CurrentCommand() string
+	ReadNextInstruction() (string, error)
+	Content() string
+	ToModel() *model.Program
 }
