@@ -1,4 +1,4 @@
-# Serial
+# CNC Serial
 
 Simple serial monitor to communicate with UART and control 3D printers or CNC. This is running on a text console.
 
