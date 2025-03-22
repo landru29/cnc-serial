@@ -1,6 +1,14 @@
 # Serial
 
-Simple serial monitor to communicate with UART. It implements helpers for G-code to control 3D printers or CNC
+Simple serial monitor to communicate with UART and control 3D printers or CNC. This is running on a text console.
+
+It implements :
+* helpers for G-code
+* program management (read, send commands step by step)
+
+![screen.png](screen.png "example")
+
+
 
 ## Prerequisite
 
@@ -15,18 +23,20 @@ make build
 ## Usage
 
 ```
-Serial monitor
+CNC Serial monitor
 
 Usage:
-  serial [flags]
+  cnc-serial [filename] [flags]
 
 Flags:
   -b, --bit-rate int   Bit rate (default 115200)
   -d, --dry-run        Dry run (do not open serial port)
-  -h, --help           help for serial
+  -h, --help           help for cnc-serial
   -l, --lang lang      language (available: en, fr) (default en)
   -p, --port string    Port name
 ```
+
+`filename`, if specified, must be a valide G-Code.
 
 ## Architecture
 
@@ -42,17 +52,16 @@ graph TD;
     Controller(**Controller**
     orchestrate processus
     );
+    Programmer(**Programmer**
+    Manage the execution of the program
+    );
     Screen(**Screen**
     Layout display
     );
-    Application(**Application**
-    main entrypoint);
 
-    Application-->Controller;
-    Application-->GCodeProcessor;
-    Application-->Screen;
     Controller-->Stacker;
     Controller-->GCodeProcessor;
+    Controller-->Programmer;
     Controller-->Transporter;
     Transporter-->serial([serial]);
     Transporter-->nop([nop]);

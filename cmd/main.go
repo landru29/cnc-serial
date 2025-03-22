@@ -36,8 +36,8 @@ func mainCommand() (*cobra.Command, error) {
 	}
 
 	output := &cobra.Command{
-		Use:   "serial [filename]",
-		Short: "Serial monitor",
+		Use:   "cnc-serial [filename]",
+		Short: "CNC Serial monitor",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := context.WithCancel(cmd.Context())
 			defer func() {
