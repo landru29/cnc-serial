@@ -3,9 +3,8 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"io"
-	"strings"
+	"regexp"
 	"sync"
 	"time"
 
@@ -37,6 +36,9 @@ type Controller struct {
 	status              model.Status
 	programmer          gcode.Programmer
 	programmerSetMutex  sync.Mutex
+	commandsToLaunch    *commandSet
+
+	regexpProcessProgram *regexp.Regexp
 }
 
 // New creates the controller.
@@ -46,10 +48,13 @@ func New(
 	processer gcode.Processor,
 	displayList ...io.Writer,
 ) *Controller {
+
 	output := &Controller{
-		stackPusher: stackPusher,
-		displayList: displayList,
-		processer:   processer,
+		stackPusher:          stackPusher,
+		displayList:          displayList,
+		processer:            processer,
+		commandsToLaunch:     &commandSet{},
+		regexpProcessProgram: regexp.MustCompile(`(?i)p([-+\d]+)`),
 	}
 
 	go func() {
@@ -88,161 +93,6 @@ func (c *Controller) SetProgrammer(programmer gcode.Programmer) {
 	}()
 
 	c.programmer = programmer
-}
-
-// PushCommands implements the control.Commander interface.
-func (c *Controller) PushCommands(commands ...string) error {
-	c.pushMutex.Lock()
-	c.transporterSetMutex.Lock()
-	defer func() {
-		c.pushMutex.Unlock()
-		c.transporterSetMutex.Unlock()
-	}()
-
-	if c.transporter == nil {
-		return errors.New("missing transporter")
-	}
-
-	for _, text := range commands {
-		if strings.TrimSpace(text) == "" {
-			if err := c.stepProgram(); err != nil {
-				return err
-			}
-
-			continue
-		}
-
-		for _, display := range c.displayList {
-			if text != c.processer.CommandStatus() {
-				model.NewRequest(c.processer.Colorize(text)).Encode(display)
-			}
-		}
-
-		if err := c.transporter.Send(text); err != nil {
-			return err
-		}
-
-		switch strings.ToUpper(strings.Split(text, " ")[0]) {
-		case c.processer.CommandRelativeCoordinate():
-			c.status.RelativeCoordinates = true
-
-			_ = c.displayStatus()
-
-		case c.processer.CommandAbsoluteCoordinate():
-			c.status.RelativeCoordinates = false
-
-			_ = c.displayStatus()
-
-		}
-
-		if text != c.processer.CommandStatus() {
-			c.stackPusher.Push(strings.ToUpper(text))
-		}
-	}
-
-	return nil
-}
-
-func (c *Controller) stepProgram() error {
-	c.programmerSetMutex.Lock()
-	defer c.programmerSetMutex.Unlock()
-
-	if c.programmer == nil {
-		return nil
-	}
-
-	currentCommand := c.programmer.CurrentCommand()
-
-	if _, err := c.programmer.ReadNextInstruction(); err != nil {
-		return err
-	}
-
-	for _, display := range c.displayList {
-		model.NewRequest(c.processer.Colorize(currentCommand)).Encode(display)
-
-		model := c.programmer.ToModel()
-		if model != nil {
-			if err := model.Encode(display); err != nil {
-				return err
-			}
-		}
-	}
-
-	if err := c.transporter.Send(currentCommand); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *Controller) bind(ctx context.Context) { //nolint: gocognit
-	bufferline := ""
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			c.transporterSetMutex.Lock()
-
-			if c.transporter == nil {
-				c.transporterSetMutex.Unlock()
-				continue
-			}
-
-			buf := make([]byte, bufferSize)
-
-			count, err := c.transporter.Read(buf)
-			c.transporterSetMutex.Unlock()
-
-			switch {
-			case errors.Is(err, io.EOF):
-				// Do nothing
-			case err != nil:
-				for _, display := range c.displayList {
-					model.NewResponse(err.Error(), true).Encode(display)
-				}
-			default:
-				bufferline += string(buf[:count])
-
-				lineSplitter := strings.Split(bufferline, "\n")
-
-				if len(lineSplitter) > 1 {
-					for idx := 0; idx < len(lineSplitter)-1; idx++ {
-						out := c.processResponse(lineSplitter[idx])
-						if out == "" {
-							continue
-						}
-
-						for _, display := range c.displayList {
-							model.NewResponse(out, false).Encode(display)
-						}
-					}
-
-					bufferline = lineSplitter[len(lineSplitter)-1]
-				}
-			}
-
-			time.Sleep(delayBetweenSerialReads)
-		}
-	}
-}
-
-func (c *Controller) processResponse(resp string) string {
-	if strings.TrimSpace(resp) == "ok" {
-		return ""
-	}
-
-	status, err := c.processer.UnmarshalStatus(resp)
-	if err != nil {
-		return resp + "\n"
-	}
-
-	c.status.Merge(*status)
-
-	_ = c.displayStatus()
-
-	return ""
 }
 
 func (c *Controller) displayStatus() error {

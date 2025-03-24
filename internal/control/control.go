@@ -9,6 +9,7 @@ import (
 // Commander is the interface for sending commands.
 type Commander interface {
 	PushCommands(commands ...string) error
+	PushProgramCommands(commands ...string) error
 	MoveRelative(offset float64, axisName string) error
 	SetTransporter(transporter transport.Transporter)
 	SetProgrammer(programmer gcode.Programmer)

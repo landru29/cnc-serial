@@ -2,10 +2,10 @@
 package nop
 
 import (
-	"io"
-
 	"github.com/landru29/cnc-serial/internal/transport"
 )
+
+const defaultStatus = "<Idle|MPos:0.000,0.000,0.000|WPos:0.000,0.000,0.000|FS:0,0|Pn:P>"
 
 var _ transport.TransportCloser = &Client{}
 
@@ -28,6 +28,10 @@ func (c Client) Close() error {
 }
 
 // Read implements the io.Reader interface.
-func (c Client) Read(_ []byte) (int, error) {
-	return 0, io.EOF
+func (c Client) Read(data []byte) (int, error) {
+	for idx, character := range defaultStatus + "\n" {
+		data[idx] = byte(character)
+	}
+
+	return len(defaultStatus) + 1, nil
 }

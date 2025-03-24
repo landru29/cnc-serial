@@ -31,6 +31,17 @@
             "program": "${workspaceFolder}/cmd",
             "console": "integratedTerminal",
             "args": ["--port", "/dev/ttyUSB0"]
+        },
+        {
+            "name": "Debug-remote",
+            "type": "go",
+            "request": "attach",
+            "mode": "remote",
+            "remotePath": "${workspaceFolder}",
+            "port": 2345,
+            "host": "localhost",
+            "cwd": "${workspaceFolder}",
+            "trace": "verbose"
         }
     ]
 }

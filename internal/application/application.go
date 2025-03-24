@@ -26,7 +26,12 @@ type Client struct {
 }
 
 // NewClient initializes a new application client.
-func NewClient(ctx context.Context, stacker stack.Stacker, processer gcode.Processor, program gcode.Programmer) (*Client, error) {
+func NewClient(
+	ctx context.Context,
+	stacker stack.Stacker,
+	processer gcode.Processor,
+	program gcode.Programmer,
+) (*Client, error) {
 	screen := display.New(stacker, processer)
 
 	output := &Client{
@@ -58,6 +63,7 @@ func NewClient(ctx context.Context, stacker stack.Stacker, processer gcode.Proce
 		Machine:    &model.Coordinates{},
 		ToolOffset: &model.Coordinates{},
 		State:      model.State("Waiting"),
+		CanRun:     true,
 	}.Encode(screen)); err != nil {
 		return nil, err
 	}

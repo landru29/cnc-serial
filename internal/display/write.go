@@ -58,14 +58,28 @@ func (s *Screen) displayStatus(status model.Status) {
 	coordinates := status.ToolCoordinates()
 
 	text := fmt.Sprintf(
-		"%s\t\t%s\tX: %+07.2f\t\tY: %+07.2f\t\tZ: %+07.2f",
+		"%s\t\t%s\tX: %+07.2f\t\tY: %+07.2f\t\tZ: %+07.2f\t%04d\t%s",
 		status.RelativeCoordinates,
 		status.CurrentState(),
 		coordinates.XCoordinate,
 		coordinates.YCoordinate,
 		coordinates.ZCoordinate,
+		status.RemainingProgram,
+		map[bool]string{true: "READY", false: "STOP "}[status.CanRun],
 	)
 	s.statusArea.SetText(text)
+
+	userInputLabel := enterCommandLabel + " "
+
+	if status.RemainingProgram != 0 {
+		if status.CanRun {
+			userInputLabel = enterCommandLabel + " ⌛ "
+		} else {
+			userInputLabel = enterCommandLabel + " ⚓ "
+		}
+	}
+
+	s.userInput.SetLabel(userInputLabel)
 }
 
 func (s *Screen) displayResponse(status model.Response) {
@@ -84,22 +98,32 @@ func (s *Screen) displayRequest(status model.Request) {
 
 func (s *Screen) displayProgram(program model.Program) {
 	splitter := strings.Split(string(program.Data), "\n")
+	output := make([]string, len(splitter))
 
 	_, _, _, height := s.progArea.GetRect()
 
 	scrollTo := 0
 
 	if program.CurrentLine > height/2 {
-		scrollTo = program.CurrentLine - height/2
+		scrollTo = program.CurrentLine - height/3
 	}
 
-	if program.CurrentLine <= len(splitter) {
-		out := splitter[:program.CurrentLine]
-		out = append(out, "[#00ff00]"+splitter[program.CurrentLine]+"[#c0c0c0]")
-		splitter = append(out, splitter[program.CurrentLine+1:]...)
+	for idx := range splitter {
+		startColor := ""
+		endColor := ""
+		if idx == program.CurrentLine {
+			startColor = "[#00ff00]"
+			endColor = "[#c0c0c0]"
+		}
+
+		if idx < program.CurrentLine {
+			startColor = "[#505050]"
+		}
+
+		output[idx] = fmt.Sprintf("[#888888]%d:[#ffffff] %s%s%s", idx, startColor, splitter[idx], endColor)
 	}
 
-	s.progArea.SetText("[#505050]" + strings.Join(splitter, "\n"))
+	s.progArea.SetText(strings.Join(output, "\n"))
 
 	s.progArea.ScrollTo(scrollTo, 0)
 }

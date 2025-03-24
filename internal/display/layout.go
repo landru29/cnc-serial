@@ -8,6 +8,8 @@ import (
 	"github.com/rivo/tview"
 )
 
+const enterCommandLabel = "Enter command"
+
 func (s *Screen) buildView(processer gcode.Processor) {
 	s.display = tview.NewApplication()
 
@@ -45,7 +47,7 @@ func (s *Screen) buildView(processer gcode.Processor) {
 		})
 
 	s.userInput = tview.NewInputField().
-		SetLabel("Enter command ").
+		SetLabel(enterCommandLabel + " ").
 		SetFieldBackgroundColor(tcell.ColorBlack).
 		SetFieldTextColor(tcell.ColorWhite).
 		SetDoneFunc(func(_ tcell.Key) {
@@ -87,7 +89,7 @@ func (s *Screen) buildView(processer gcode.Processor) {
 			return
 		}
 
-		s.helpArea.SetText("")
+		s.helpArea.SetText("p[nb] process program | p-1 process all the program | s STOP")
 	})
 
 	s.logArea.SetBorder(true)

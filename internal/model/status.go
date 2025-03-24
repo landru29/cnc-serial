@@ -18,6 +18,8 @@ type Status struct {
 	State               State            `json:"state"`
 	RelativeCoordinates RelativeAbsolute `json:"relativeCoordinates"`
 	Type                ObjectName       `json:"type"`
+	RemainingProgram    uint64           `json:"remainingProgram"`
+	CanRun              bool             `json:"canRun"`
 }
 
 // Encode is the status Encoder.
