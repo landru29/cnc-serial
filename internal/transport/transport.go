@@ -1,12 +1,17 @@
 // Package transport is the command transportation to the CNC.
 package transport
 
-import "io"
+import (
+	"context"
+	"io"
+)
+
+type ResponseHandler func(context.Context, []byte, error)
 
 // Transporter is the data transport.
 type Transporter interface {
-	io.Reader
-	Send(commands ...string) error
+	Send(ctx context.Context, commands ...string) error
+	SetResponseHandler(ResponseHandler)
 }
 
 // TransportCloser is a Transporter that can be closed.

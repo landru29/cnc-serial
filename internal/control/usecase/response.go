@@ -1,69 +1,47 @@
 package usecase
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io"
 	"strings"
-	"time"
 
 	"github.com/landru29/cnc-serial/internal/model"
 )
 
-func (c *Controller) bind(ctx context.Context) { //nolint: gocognit
-	bufferline := ""
+// ProcessResponse implements the control.Commander interface.
+func (c *Controller) ProcessResponse(ctx context.Context, data []byte, err error) {
+	switch {
+	case errors.Is(err, io.EOF):
+		// Do nothing
+	case err != nil:
+		for _, display := range c.displayList {
+			model.NewResponse(err.Error(), true).Encode(display)
+		}
+	default:
+		c.bufferline = append(c.bufferline, data...)
 
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			c.transporterSetMutex.Lock()
+		lineSplitter := bytes.Split(c.bufferline, []byte("\n"))
 
-			if c.transporter == nil {
-				c.transporterSetMutex.Unlock()
-				continue
-			}
+		if len(lineSplitter) > 1 {
+			for idx := 0; idx < len(lineSplitter)-1; idx++ {
+				out := c.processLine(ctx, string(lineSplitter[idx]))
+				if out == "" {
+					continue
+				}
 
-			buf := make([]byte, bufferSize)
-
-			count, err := c.transporter.Read(buf)
-			c.transporterSetMutex.Unlock()
-
-			switch {
-			case errors.Is(err, io.EOF):
-				// Do nothing
-			case err != nil:
 				for _, display := range c.displayList {
-					model.NewResponse(err.Error(), true).Encode(display)
-				}
-			default:
-				bufferline += string(buf[:count])
-
-				lineSplitter := strings.Split(bufferline, "\n")
-
-				if len(lineSplitter) > 1 {
-					for idx := 0; idx < len(lineSplitter)-1; idx++ {
-						out := c.processResponse(lineSplitter[idx])
-						if out == "" {
-							continue
-						}
-
-						for _, display := range c.displayList {
-							model.NewResponse(out, false).Encode(display)
-						}
-					}
-
-					bufferline = lineSplitter[len(lineSplitter)-1]
+					model.NewResponse(out, false).Encode(display)
 				}
 			}
 
-			time.Sleep(delayBetweenSerialReads)
+			c.bufferline = lineSplitter[len(lineSplitter)-1]
 		}
 	}
 }
 
-func (c *Controller) processResponse(resp string) string {
+func (c *Controller) processLine(ctx context.Context, resp string) string {
 	if strings.TrimSpace(resp) == "ok" {
 		return ""
 	}
@@ -79,7 +57,7 @@ func (c *Controller) processResponse(resp string) string {
 	if strings.ToUpper(string(c.status.State)) == "IDLE" && c.status.CanRun {
 		cmd, found := c.commandsToLaunch.next()
 		if found {
-			_ = c.PushCommands(cmd)
+			_ = c.PushCommands(ctx, cmd)
 		} else {
 			c.status.CanRun = false
 		}

@@ -11,7 +11,7 @@
             "mode": "auto",
             "program": "${workspaceFolder}/cmd",
             "console": "integratedTerminal",
-            "args": ["--dry-run", "../internal/gcode/grbl/testdata/prog01.gcode"],
+            "args": ["mock", "../internal/gcode/grbl/testdata/prog01.gcode"],
             "buildFlags": ["-tags", "withbutton"]
         },
         {
@@ -21,7 +21,24 @@
             "mode": "auto",
             "program": "${workspaceFolder}/cmd",
             "console": "integratedTerminal",
-            "args": ["--dry-run", "../internal/gcode/grbl/testdata/prog01.gcode"]
+            "args": ["mock", "../internal/gcode/grbl/testdata/prog01.gcode"]
+        },
+        {
+            "name": "RPC client",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd",
+            "console": "integratedTerminal",
+            "args": ["rpc", "../internal/gcode/grbl/testdata/prog01.gcode"]
+        },
+        {
+            "name": "agent mock",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd",
+            "args": ["agent", "rpc", "mock"],
         },
         {
             "name": "Serial",
@@ -30,7 +47,7 @@
             "mode": "auto",
             "program": "${workspaceFolder}/cmd",
             "console": "integratedTerminal",
-            "args": ["--port", "/dev/ttyUSB0"]
+            "args": ["serial", "--port", "/dev/ttyUSB0"]
         },
         {
             "name": "Debug-remote",

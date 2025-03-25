@@ -14,90 +14,81 @@ import (
 	"github.com/landru29/cnc-serial/internal/gcode/grbl"
 	"github.com/landru29/cnc-serial/internal/lang"
 	"github.com/landru29/cnc-serial/internal/stack/memory"
-	"github.com/landru29/cnc-serial/internal/transport/nop"
-	"github.com/landru29/cnc-serial/internal/transport/serial"
 	"github.com/spf13/cobra"
 )
 
 const defaultBitRate = 115200
 
+type options struct {
+	availableLanguages []lang.Language
+	language           lang.Language
+	gerbil             *grbl.Gerbil
+	stacker            *memory.Stack
+}
+
+func foo(ctx context.Context, opts *options, args []string) (*application.Client, error) {
+	var program *grbl.Program
+
+	if len(args) > 0 {
+		file, err := os.Open(args[0])
+		if err != nil {
+			return nil, err
+		}
+
+		defer func(closer io.Closer) {
+			_ = closer.Close()
+		}(file)
+
+		program, err = grbl.NewProgram(file)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	app, err := application.NewClient(ctx, opts.stacker, opts.gerbil, program)
+	if err != nil {
+		return nil, err
+	}
+
+	app.SetLanguage(opts.language)
+
+	return app, nil
+}
+
 func mainCommand() (*cobra.Command, error) {
 	var (
-		portName string
-		bitRate  int
-		dryRun   bool
-		language = lang.DefaultLanguage
-		program  *grbl.Program
+		opts      options
+		forceGRPC bool
 	)
-
-	stacker := memory.New()
 
 	gerbil, err := grbl.New()
 	if err != nil {
 		return nil, err
 	}
 
+	opts.availableLanguages = gerbil.AvailableLanguages()
+	opts.gerbil = gerbil
+	opts.language = lang.DefaultLanguage
+	opts.stacker = memory.New()
+
 	output := &cobra.Command{
 		Use:   "cnc-serial [filename]",
 		Short: "CNC Serial monitor",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx, cancel := context.WithCancel(cmd.Context())
-			defer func() {
-				cancel()
-			}()
-
-			if len(args) > 0 {
-				file, err := os.Open(args[0])
-				if err != nil {
-					return err
-				}
-
-				defer func(closer io.Closer) {
-					_ = closer.Close()
-				}(file)
-
-				program, err = grbl.NewProgram(file)
-				if err != nil {
-					return err
-				}
-			}
-
-			app, err := application.NewClient(ctx, stacker, gerbil, program)
-			if err != nil {
-				return err
-			}
-
-			app.SetLanguage(language)
-
-			nopTransport := nop.New()
-
-			app.SetTransport(nopTransport)
-
-			if !dryRun {
-				serialClient, err := serial.New(portName, bitRate)
-				if err != nil {
-					return err
-				}
-
-				app.SetTransport(serialClient)
-
-				defer func() {
-					_ = app.Close()
-				}()
-			}
-
-			return app.Start()
-		},
 	}
 
-	output.Flags().IntVarP(&bitRate, "bit-rate", "b", defaultBitRate, "Bit rate")
-	output.Flags().StringVarP(&portName, "port", "p", defaultPort(), "Port name")
-	output.Flags().BoolVarP(&dryRun, "dry-run", "d", false, "Dry run (do not open serial port)")
-	output.Flags().VarP(
-		&language,
+	output.Flags().BoolVarP(&forceGRPC, "grpc", "", false, "RPC connection")
+	output.PersistentFlags().VarP(
+		&opts.language,
 		"lang",
 		"l",
-		fmt.Sprintf("language (available: %s)", joinLang(gerbil.AvailableLanguages())),
+		fmt.Sprintf("language (available: %s)", joinLang(opts.availableLanguages)),
+	)
+
+	output.AddCommand(
+		agentCommand(),
+		clientSerialCommand(&opts),
+		clientMockCommand(&opts),
+		clientRPCCommand(&opts),
 	)
 
 	return output, nil

@@ -8,6 +8,7 @@ import (
 func (c *Client) SetTransport(transporter transport.TransportCloser) {
 	c.commander.SetTransporter(transporter)
 	c.screen.SetCommandSender(c.commander)
+	transporter.SetResponseHandler(c.commander.ProcessResponse)
 	c.transport = transporter
 }
 

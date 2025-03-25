@@ -2,6 +2,7 @@
 package display
 
 import (
+	"context"
 	"sync"
 
 	"github.com/landru29/cnc-serial/internal/control"
@@ -28,14 +29,14 @@ type BaseScreen struct {
 }
 
 // New creates a screen.
-func New(stackRetriever stack.Retriever, processer gcode.Processor) *Screen {
+func New(ctx context.Context, stackRetriever stack.Retriever, processer gcode.Processor) *Screen {
 	output := Screen{
 		BaseScreen: BaseScreen{
 			stackRetriever: stackRetriever,
 		},
 	}
 
-	output.buildView(processer)
+	output.buildView(ctx, processer)
 
 	return &output
 }

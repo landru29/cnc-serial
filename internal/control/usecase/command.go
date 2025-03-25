@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"strconv"
 	"strings"
@@ -9,7 +10,7 @@ import (
 )
 
 // PushCommands implements the control.Commander interface.
-func (c *Controller) PushCommands(commands ...string) error {
+func (c *Controller) PushCommands(ctx context.Context, commands ...string) error {
 	c.pushMutex.Lock()
 	c.transporterSetMutex.Lock()
 	defer func() {
@@ -82,7 +83,7 @@ func (c *Controller) PushCommands(commands ...string) error {
 			}
 		}
 
-		if err := c.transporter.Send(text); err != nil {
+		if err := c.transporter.Send(ctx, text); err != nil {
 			return err
 		}
 

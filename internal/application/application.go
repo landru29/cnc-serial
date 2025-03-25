@@ -32,7 +32,7 @@ func NewClient(
 	processer gcode.Processor,
 	program gcode.Programmer,
 ) (*Client, error) {
-	screen := display.New(stacker, processer)
+	screen := display.New(ctx, stacker, processer)
 
 	output := &Client{
 		stack:     stacker,

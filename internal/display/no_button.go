@@ -3,6 +3,8 @@
 package display
 
 import (
+	"context"
+
 	"github.com/rivo/tview"
 )
 
@@ -11,7 +13,7 @@ type Screen struct {
 	BaseScreen
 }
 
-func (s Screen) layout() *tview.Flex {
+func (s Screen) layout(_ context.Context) *tview.Flex {
 	return tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(s.statusArea, 1, 0, false).

@@ -1,6 +1,7 @@
 package display
 
 import (
+	"context"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -10,7 +11,7 @@ import (
 
 const enterCommandLabel = "Enter command"
 
-func (s *Screen) buildView(processer gcode.Processor) {
+func (s *Screen) buildView(ctx context.Context, processer gcode.Processor) {
 	s.display = tview.NewApplication()
 
 	s.logArea = tview.NewTextView().
@@ -59,7 +60,7 @@ func (s *Screen) buildView(processer gcode.Processor) {
 				return
 			}
 
-			_ = s.commander.PushCommands(text)
+			_ = s.commander.PushCommands(ctx, text)
 
 			s.userInput.SetText("")
 		})
@@ -96,5 +97,5 @@ func (s *Screen) buildView(processer gcode.Processor) {
 	s.helpArea.SetBorder(true)
 	s.progArea.SetBorder(true)
 
-	s.display = s.display.SetRoot(s.layout(), true)
+	s.display = s.display.SetRoot(s.layout(ctx), true)
 }

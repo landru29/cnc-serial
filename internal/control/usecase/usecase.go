@@ -16,10 +16,6 @@ import (
 )
 
 const (
-	bufferSize = 200
-
-	delayBetweenSerialReads = 500 * time.Millisecond
-
 	delayBetweenStatusRequest = time.Second
 )
 
@@ -27,17 +23,17 @@ var _ control.Commander = &Controller{}
 
 // Controller is the control.Commander implementation.
 type Controller struct {
-	displayList         []io.Writer
-	stackPusher         stack.Pusher
-	transporter         transport.Transporter
-	transporterSetMutex sync.Mutex
-	processer           gcode.Processor
-	pushMutex           sync.Mutex
-	status              model.Status
-	programmer          gcode.Programmer
-	programmerSetMutex  sync.Mutex
-	commandsToLaunch    *commandSet
-
+	displayList          []io.Writer
+	stackPusher          stack.Pusher
+	transporter          transport.Transporter
+	transporterSetMutex  sync.Mutex
+	processer            gcode.Processor
+	pushMutex            sync.Mutex
+	status               model.Status
+	programmer           gcode.Programmer
+	programmerSetMutex   sync.Mutex
+	commandsToLaunch     *commandSet
+	bufferline           []byte
 	regexpProcessProgram *regexp.Regexp
 }
 
@@ -58,10 +54,6 @@ func New(
 	}
 
 	go func() {
-		output.bind(ctx)
-	}()
-
-	go func() {
 		ticker := time.NewTicker(delayBetweenStatusRequest)
 
 		for {
@@ -69,7 +61,7 @@ func New(
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				_ = output.PushCommands(processer.CommandStatus())
+				_ = output.PushCommands(ctx, processer.CommandStatus())
 			}
 		}
 	}()
@@ -77,6 +69,7 @@ func New(
 	return output
 }
 
+// SetTransporter implements the control.Commander interface.
 func (c *Controller) SetTransporter(transporter transport.Transporter) {
 	c.transporterSetMutex.Lock()
 	defer func() {
@@ -86,6 +79,7 @@ func (c *Controller) SetTransporter(transporter transport.Transporter) {
 	c.transporter = transporter
 }
 
+// SetProgrammer implements the control.Commander interface.
 func (c *Controller) SetProgrammer(programmer gcode.Programmer) {
 	c.programmerSetMutex.Lock()
 	defer func() {
@@ -106,7 +100,7 @@ func (c *Controller) displayStatus() error {
 }
 
 // MoveRelative implements the control.Commander interface.
-func (c *Controller) MoveRelative(offset float64, axisName string) error {
+func (c *Controller) MoveRelative(ctx context.Context, offset float64, axisName string) error {
 	commands := []string{
 		c.processer.CommandRelativeCoordinate(),
 		c.processer.MoveAxis(offset, axisName),
@@ -117,5 +111,5 @@ func (c *Controller) MoveRelative(offset float64, axisName string) error {
 		commands = commands[1:2]
 	}
 
-	return c.PushCommands(commands...)
+	return c.PushCommands(ctx, commands...)
 }
