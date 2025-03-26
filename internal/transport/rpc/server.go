@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"net"
+	"strings"
 	"sync"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -22,14 +24,16 @@ type Server struct {
 	bufferline  []byte
 	bufferMutex sync.Mutex
 	stop        chan struct{}
+	logger      *slog.Logger
 }
 
 // NewServer creates a new GRPC server.
-func NewServer(ctx context.Context, transporter transport.Transporter, netListener net.Listener) (*Server, error) {
+func NewServer(ctx context.Context, logger *slog.Logger, transporter transport.Transporter, netListener net.Listener) (*Server, error) {
 	output := Server{
 		rpc:         grpc.NewServer(),
 		transporter: transporter,
 		stop:        make(chan struct{}, 1),
+		logger:      logger,
 	}
 
 	rpcmodel.RegisterCommandSenderServer(output.rpc, &output)
@@ -46,8 +50,11 @@ func NewServer(ctx context.Context, transporter transport.Transporter, netListen
 			// Do nothing
 		case err != nil:
 			output.bufferline = append(output.bufferline, []byte(err.Error()+"\n")...)
+			output.logger.Error("handler error", "message", err.Error())
+
 		default:
 			output.bufferline = append(output.bufferline, data...)
+			output.logger.Info("handler response", "response", strings.ReplaceAll(string(data), "\n", "↲"))
 		}
 	})
 
@@ -71,6 +78,8 @@ func NewServer(ctx context.Context, transporter transport.Transporter, netListen
 
 // SendCommand implements the rpcmodel.CommandSenderServer interface.
 func (s *Server) SendCommand(ctx context.Context, cmd *rpcmodel.Command) (*empty.Empty, error) {
+	s.logger.Info("Send command", "command", strings.ReplaceAll(cmd.GetData(), "\n", "↲"))
+
 	return nil, s.transporter.Send(ctx, cmd.GetData())
 }
 
@@ -87,6 +96,8 @@ func (s *Server) GetStatus(context.Context, *empty.Empty) (*rpcmodel.Status, err
 
 	data := s.bufferline
 	s.bufferline = []byte{}
+
+	s.logger.Info("Get status", "status", strings.ReplaceAll(string(data), "\n", "↲"))
 
 	return &rpcmodel.Status{
 		Data: string(data),

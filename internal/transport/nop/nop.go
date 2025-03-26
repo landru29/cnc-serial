@@ -49,7 +49,9 @@ func (c *Client) Close() error {
 
 // SetResponseHandler implements the Transport.Transporter interface.
 func (c *Client) SetResponseHandler(handler transport.ResponseHandler) {
+	c.handlerMutex.Lock()
 	c.handler = handler
+	c.handlerMutex.Unlock()
 }
 
 func (c *Client) bind(ctx context.Context) {

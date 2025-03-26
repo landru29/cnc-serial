@@ -1,14 +1,14 @@
-.PHONY: cnc-serial cnc-serial-minimal all build-debug-serial install-tools debug kill-debug
+.PHONY: cnc cnc-minimal all build-debug install-tools debug kill-debug __debug_bin
 
-all: cnc-serial cnc-serial-minimal
+all: cnc cnc-minimal
 
-cnc-serial:
-	go build --tags withbutton -o cnc-serial ./cmd/...
+cnc:
+	go build --tags withbutton -o cnc ./cmd/...
 
-cnc-serial-minimal:
-	go build -o cnc-serial-minimal ./cmd/...
+cnc-minimal:
+	go build -o cnc-minimal ./cmd/...
 clean:
-	rm -f cnc-serial cnc-serial-minimal __debug_bin
+	rm -f cnc cnc-minimal __debug_bin
 
 lint:
 	golangci-lint run ./...

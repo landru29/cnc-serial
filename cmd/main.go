@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"os/signal"
 	"strings"
@@ -24,6 +25,7 @@ type options struct {
 	language           lang.Language
 	gerbil             *grbl.Gerbil
 	stacker            *memory.Stack
+	logger             *slog.Logger
 }
 
 func foo(ctx context.Context, opts *options, args []string) (*application.Client, error) {
@@ -70,10 +72,11 @@ func mainCommand() (*cobra.Command, error) {
 	opts.gerbil = gerbil
 	opts.language = lang.DefaultLanguage
 	opts.stacker = memory.New()
+	opts.logger = slog.Default()
 
 	output := &cobra.Command{
-		Use:   "cnc-serial [filename]",
-		Short: "CNC Serial monitor",
+		Use:   "cnc",
+		Short: "CNC monitor",
 	}
 
 	output.Flags().BoolVarP(&forceGRPC, "grpc", "", false, "RPC connection")
@@ -85,7 +88,7 @@ func mainCommand() (*cobra.Command, error) {
 	)
 
 	output.AddCommand(
-		agentCommand(),
+		agentCommand(&opts),
 		clientSerialCommand(&opts),
 		clientMockCommand(&opts),
 		clientRPCCommand(&opts),

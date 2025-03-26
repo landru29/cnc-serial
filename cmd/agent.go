@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"os/signal"
@@ -15,18 +16,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func agentCommand() *cobra.Command {
+func agentCommand(opts *options) *cobra.Command {
 	output := &cobra.Command{
 		Use:   "agent",
 		Short: "manage the local agent",
 	}
 
-	output.AddCommand(rpcAgentCommand())
+	output.AddCommand(rpcAgentCommand(opts))
 
 	return output
 }
 
-func rpcAgentCommand() *cobra.Command {
+func rpcAgentCommand(opts *options) *cobra.Command {
 	var (
 		addr string
 	)
@@ -39,14 +40,14 @@ func rpcAgentCommand() *cobra.Command {
 	output.PersistentFlags().StringVarP(&addr, "address", "a", ":1324", "RPC server address")
 
 	output.AddCommand(
-		rpcSerialCommand(&addr),
-		rpcMockCommand(&addr),
+		rpcSerialCommand(opts, &addr),
+		rpcMockCommand(opts, &addr),
 	)
 
 	return output
 }
 
-func rpcSerialCommand(addr *string) *cobra.Command {
+func rpcSerialCommand(opts *options, addr *string) *cobra.Command {
 	var (
 		bitRate  int
 		portName string
@@ -68,7 +69,7 @@ func rpcSerialCommand(addr *string) *cobra.Command {
 				return err
 			}
 
-			cmd.Printf("listening gRPC on %s\n", *addr)
+			opts.logger.Info("listening gRPC", "addr", *addr)
 
 			if portName != "" && bitRate > 0 {
 				serialClient, err := serial.New(ctx, portName, bitRate)
@@ -78,13 +79,13 @@ func rpcSerialCommand(addr *string) *cobra.Command {
 
 				transporter = serialClient
 
-				cmd.Printf("Connected to %s with bitrate %d\n", portName, bitRate)
+				opts.logger.Info(fmt.Sprintf("Connected to %s with bitrate %d", portName, bitRate))
 
 				defer func() {
 					_ = serialClient.Close()
 				}()
 
-				servers, err := rpc.NewServer(ctx, transporter, lis)
+				servers, err := rpc.NewServer(ctx, opts.logger, transporter, lis)
 				if err != nil {
 					return err
 				}
@@ -111,7 +112,7 @@ func rpcSerialCommand(addr *string) *cobra.Command {
 	return output
 }
 
-func rpcMockCommand(addr *string) *cobra.Command {
+func rpcMockCommand(opts *options, addr *string) *cobra.Command {
 	output := &cobra.Command{
 		Use:   "mock [filename]",
 		Short: "CNC mock monitor",
@@ -128,19 +129,19 @@ func rpcMockCommand(addr *string) *cobra.Command {
 				return err
 			}
 
-			cmd.Printf("listening gRPC on %s\n", *addr)
+			opts.logger.Info("listening gRPC", "addr", *addr)
 
 			nopTransport := nop.New(ctx)
 
 			transporter = nopTransport
 
-			cmd.Printf("Connected to mock\n")
+			opts.logger.Info("Connected to mock")
 
 			defer func() {
 				_ = nopTransport.Close()
 			}()
 
-			servers, err := rpc.NewServer(ctx, transporter, lis)
+			servers, err := rpc.NewServer(ctx, opts.logger, transporter, lis)
 			if err != nil {
 				return err
 			}
