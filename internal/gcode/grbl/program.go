@@ -98,6 +98,7 @@ func (p *Program) skipSpaces() {
 
 func (p *Program) readNextChars(skipStopper bool, stoppers ...byte) string {
 	output := ""
+
 	var lastRead byte
 
 	for {
@@ -164,9 +165,7 @@ func (p *Program) skipComments() error {
 	if current == '%' || current == ';' {
 		_ = p.readNextChars(true, '\n')
 
-		p.skipComments()
-
-		return nil
+		return p.skipComments()
 	}
 
 	// multiline comment.

@@ -101,19 +101,22 @@ func (s *Screen) displayProgram(program model.Program) {
 	splitter := strings.Split(string(program.Data), "\n")
 	output := make([]string, len(splitter))
 
-	_, _, _, height := s.progArea.GetRect()
+	_, _, _, height := s.progArea.GetRect() //nolint: dogsled
 
 	scrollTo := 0
 
 	if program.CurrentLine > height/2 {
-		scrollTo = program.CurrentLine - height/3
+		scrollTo = program.CurrentLine - height/3 //nolint: mnd
 	}
 
 	for idx := range splitter {
 		startColor := ""
+
 		endColor := ""
+
 		if idx == program.CurrentLine {
 			startColor = "[#00ff00]"
+
 			endColor = "[#c0c0c0]"
 		}
 

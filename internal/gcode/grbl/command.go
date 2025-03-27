@@ -15,7 +15,7 @@ func (g Gerbil) CommandAbsoluteCoordinate() string {
 	return "G90"
 }
 
-// CommandAbsoluteCoordinate implements the gcode.Processor interface.
+// CommandRelativeCoordinate implements the gcode.Processor interface.
 func (g Gerbil) CommandRelativeCoordinate() string {
 	return "G91"
 }

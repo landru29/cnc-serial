@@ -6,12 +6,13 @@ import (
 	"io"
 )
 
+// ResponseHandler is the handler for response.
 type ResponseHandler func(context.Context, []byte, error)
 
 // Transporter is the data transport.
 type Transporter interface {
 	Send(ctx context.Context, commands ...string) error
-	SetResponseHandler(ResponseHandler)
+	SetResponseHandler(handler ResponseHandler)
 	ConnectionStatus() string
 }
 

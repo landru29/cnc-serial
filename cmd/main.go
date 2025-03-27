@@ -58,9 +58,7 @@ func initApp(ctx context.Context, opts *options, args []string) (*application.Cl
 }
 
 func mainCommand() (*cobra.Command, *slog.Logger, error) {
-	var (
-		forceGRPC bool
-	)
+	var forceGRPC bool
 
 	opts := options{
 		language: lang.DefaultLanguage,

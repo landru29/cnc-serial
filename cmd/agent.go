@@ -28,9 +28,7 @@ func agentCommand(opts *options) *cobra.Command {
 }
 
 func rpcAgentCommand(opts *options) *cobra.Command {
-	var (
-		addr string
-	)
+	var addr string
 
 	output := &cobra.Command{
 		Use:   "rpc",
@@ -56,7 +54,7 @@ func rpcSerialCommand(opts *options, addr *string) *cobra.Command {
 	output := &cobra.Command{
 		Use:   "serial [filename]",
 		Short: "CNC Serial monitor",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			var transporter transport.Transporter
 
 			ctx, cancel := context.WithCancel(cmd.Context())
@@ -116,7 +114,7 @@ func rpcMockCommand(opts *options, addr *string) *cobra.Command {
 	output := &cobra.Command{
 		Use:   "mock [filename]",
 		Short: "CNC mock monitor",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			var transporter transport.Transporter
 
 			ctx, cancel := context.WithCancel(cmd.Context())

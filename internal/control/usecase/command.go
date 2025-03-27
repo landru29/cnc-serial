@@ -10,7 +10,7 @@ import (
 )
 
 // PushCommands implements the control.Commander interface.
-func (c *Controller) PushCommands(ctx context.Context, commands ...string) error {
+func (c *Controller) PushCommands(ctx context.Context, commands ...string) error { //nolint: funlen,gocognit,cyclop
 	c.pushMutex.Lock()
 	c.transporterSetMutex.Lock()
 	defer func() {
@@ -43,7 +43,7 @@ func (c *Controller) PushCommands(ctx context.Context, commands ...string) error
 			continue
 		}
 
-		if command[0] == 'p' || command[0] == 'P' {
+		if command[0] == 'p' || command[0] == 'P' { //nolint: nestif
 			if len(command) == 1 {
 				c.status.CanRun = true
 
@@ -64,7 +64,9 @@ func (c *Controller) PushCommands(ctx context.Context, commands ...string) error
 			}
 
 			if cmdCount > 0 {
-				c.stepProgram(cmdCount)
+				if err := c.stepProgram(cmdCount); err != nil {
+					return err
+				}
 			} else {
 				var err error
 				for err == nil {
@@ -79,7 +81,7 @@ func (c *Controller) PushCommands(ctx context.Context, commands ...string) error
 
 		for _, display := range c.displayList {
 			if text != c.processer.CommandStatus() {
-				model.NewRequest(c.processer.Colorize(text)).Encode(display)
+				_ = model.NewRequest(c.processer.Colorize(text)).Encode(display)
 			}
 		}
 
@@ -97,7 +99,6 @@ func (c *Controller) PushCommands(ctx context.Context, commands ...string) error
 			c.status.RelativeCoordinates = false
 
 			_ = c.displayStatus()
-
 		}
 
 		if text != c.processer.CommandStatus() {

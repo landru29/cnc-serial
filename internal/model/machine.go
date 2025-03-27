@@ -17,7 +17,7 @@ type Response struct {
 	IsError bool       `json:"error"`
 }
 
-// NewResponse builds a response
+// NewResponse builds a response.
 func NewResponse(message string, isError bool) Response {
 	return Response{
 		Message: message,
@@ -28,6 +28,7 @@ func NewResponse(message string, isError bool) Response {
 // Encode is the response encoder.
 func (r Response) Encode(writer io.Writer) error {
 	r.Type = responseMagic
+
 	return encode(writer, r)
 }
 
@@ -51,7 +52,7 @@ type Request struct {
 	Message string     `json:"request"`
 }
 
-// NewRequest builds a request
+// NewRequest builds a request.
 func NewRequest(message string) Request {
 	return Request{
 		Message: message,
@@ -61,6 +62,7 @@ func NewRequest(message string) Request {
 // Encode is the request encoder.
 func (r Request) Encode(writer io.Writer) error {
 	r.Type = requestMagic
+
 	return encode(writer, r)
 }
 

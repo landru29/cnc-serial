@@ -109,7 +109,7 @@ func clientRPCCommand(opts *options) *cobra.Command {
 			}()
 
 			if addr != "" {
-				grpcTransport, err := rpc.New(ctx, opts.logger, addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+				grpcTransport, err := rpc.New(ctx, addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 				if err != nil {
 					return err
 				}

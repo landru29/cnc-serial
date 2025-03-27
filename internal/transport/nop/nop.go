@@ -49,6 +49,7 @@ func (c *Client) Send(_ context.Context, _ ...string) error {
 // Close implements the io.Closer interface.
 func (c *Client) Close() error {
 	c.stop <- struct{}{}
+
 	return nil
 }
 

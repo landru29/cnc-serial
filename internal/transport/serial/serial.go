@@ -57,7 +57,7 @@ func (c *Client) ConnectionStatus() string {
 }
 
 // Send implements the Transport.Transporter interface.
-func (c *Client) Send(ctx context.Context, texts ...string) error {
+func (c *Client) Send(_ context.Context, texts ...string) error {
 	for _, text := range texts {
 		if _, err := fmt.Fprintf(c.port, "%s\n", text); err != nil {
 			return err

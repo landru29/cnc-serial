@@ -44,7 +44,6 @@ func New(
 	processer gcode.Processor,
 	displayList ...io.Writer,
 ) *Controller {
-
 	output := &Controller{
 		stackPusher:          stackPusher,
 		displayList:          displayList,

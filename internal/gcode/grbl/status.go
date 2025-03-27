@@ -36,7 +36,7 @@ func (g Gerbil) UnmarshalStatus(statusString string) (*model.Status, error) {
 	return &output, nil
 }
 
-func (g Gerbil) decodeNext(statusString string, output *model.Status) string { //nolint: funlen,gocognit,cyclop
+func (g Gerbil) decodeNext(statusString string, output *model.Status) string { //nolint: funlen,gocognit,cyclop,gocyclo
 	// go to the first word.
 	idx := 0
 	for idx < len(statusString) &&
@@ -126,7 +126,10 @@ func (g Gerbil) decodeNext(statusString string, output *model.Status) string { /
 		output.Alarm = &casted
 
 	case "pn":
-		for len(statusString) > 0 && ((statusString[0] > 'a' && statusString[0] < 'z') || (statusString[0] > 'A' && statusString[0] < 'Z')) {
+		for len(statusString) > 0 &&
+			((statusString[0] > 'a' && statusString[0] < 'z') ||
+				(statusString[0] > 'A' &&
+					statusString[0] < 'Z')) {
 			statusString = statusString[1:]
 		}
 

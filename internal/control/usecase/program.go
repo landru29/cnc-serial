@@ -42,7 +42,9 @@ func (c *Controller) stepProgram(count int64) error {
 			return err
 		}
 
-		c.PushProgramCommands(currentCommand)
+		if err := c.PushProgramCommands(currentCommand); err != nil {
+			return err
+		}
 	}
 
 	progModel := c.programmer.ToModel()
@@ -59,7 +61,7 @@ func (c *Controller) stepProgram(count int64) error {
 
 // PushProgramCommands implements the control.Commander interface.
 func (c *Controller) PushProgramCommands(commands ...string) error {
-	c.status.RemainingProgram = uint64(len(c.commandsToLaunch.commands) / 2)
+	c.status.RemainingProgram = int64(len(c.commandsToLaunch.commands) / 2) //nolint: mnd
 	c.commandsToLaunch.push(c.processer.CommandStatus(), commands...)
 
 	if err := c.displayStatus(); err != nil {

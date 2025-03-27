@@ -4,11 +4,11 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"strings"
 )
 
+// Program is a program with execution cursor.
 type Program struct {
 	Data        []byte
 	CurrentLine int
@@ -20,14 +20,17 @@ func (p *Program) Encode(writer io.Writer) error {
 		return nil
 	}
 
-	fmt.Fprintf(writer, "%d|%s\n", p.CurrentLine, base64.StdEncoding.EncodeToString(p.Data))
+	if _, err := fmt.Fprintf(writer, "%d|%s\n", p.CurrentLine, base64.StdEncoding.EncodeToString(p.Data)); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-// DecodeRequest is the program decoder.
+// DecodeProgram is the program decoder.
 func DecodeProgram(data string) *Program {
 	splitter := strings.Split(data, "|")
-	if len(splitter) != 2 {
+	if len(splitter) != 2 { //nolint: mnd
 		return nil
 	}
 
@@ -35,8 +38,6 @@ func DecodeProgram(data string) *Program {
 	if err != nil {
 		return nil
 	}
-
-	os.WriteFile("/tmp/foo.txt", []byte(splitter[1]), os.ModePerm)
 
 	prog, err := base64.StdEncoding.DecodeString(splitter[1])
 	if err != nil {

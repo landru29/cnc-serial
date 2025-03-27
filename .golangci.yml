@@ -24,6 +24,7 @@ linters:
     - recvcheck
 # Deprecated
     - tenv
+    - exportloopref
 # Not supported by go 1.18
     - copyloopvar
     - intrange

@@ -28,7 +28,12 @@ type Server struct {
 }
 
 // NewServer creates a new GRPC server.
-func NewServer(ctx context.Context, logger *slog.Logger, transporter transport.Transporter, netListener net.Listener) (*Server, error) {
+func NewServer(
+	ctx context.Context,
+	logger *slog.Logger,
+	transporter transport.Transporter,
+	netListener net.Listener,
+) (*Server, error) {
 	output := Server{
 		rpc:         grpc.NewServer(),
 		transporter: transporter,
@@ -40,7 +45,7 @@ func NewServer(ctx context.Context, logger *slog.Logger, transporter transport.T
 
 	reflection.Register(output.rpc)
 
-	transporter.SetResponseHandler(func(ctx context.Context, data []byte, err error) {
+	transporter.SetResponseHandler(func(_ context.Context, data []byte, err error) {
 		output.bufferMutex.Lock()
 
 		defer output.bufferMutex.Unlock()
@@ -86,6 +91,7 @@ func (s *Server) SendCommand(ctx context.Context, cmd *rpcmodel.Command) (*empty
 // Close implements the io.Closer interface.
 func (s *Server) Close() error {
 	s.stop <- struct{}{}
+
 	return nil
 }
 

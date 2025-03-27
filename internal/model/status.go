@@ -21,7 +21,7 @@ type Status struct {
 	State               State            `json:"state"`
 	RelativeCoordinates RelativeAbsolute `json:"relativeCoordinates"`
 	Type                ObjectName       `json:"type"`
-	RemainingProgram    uint64           `json:"remainingProgram"`
+	RemainingProgram    int64            `json:"remainingProgram"`
 	CanRun              bool             `json:"canRun"`
 	Connection          string           `json:"connection"`
 }
@@ -34,6 +34,7 @@ func (s Status) FormatedConnection() string {
 // Encode is the status Encoder.
 func (s Status) Encode(writer io.Writer) error {
 	s.Type = statusMagic
+
 	return encode(writer, s)
 }
 
@@ -141,7 +142,7 @@ func (s *Status) Merge(status Status) {
 	}
 }
 
-// RelativeAbsolute is wheter coordinates are relatives absolutes.
+// RelativeAbsolute is whether coordinates are relatives absolutes.
 type RelativeAbsolute bool
 
 // String implements the Stringer interface.

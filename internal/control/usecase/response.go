@@ -17,7 +17,7 @@ func (c *Controller) ProcessResponse(ctx context.Context, data []byte, err error
 		// Do nothing
 	case err != nil:
 		for _, display := range c.displayList {
-			model.NewResponse(err.Error(), true).Encode(display)
+			_ = model.NewResponse(err.Error(), true).Encode(display)
 		}
 	default:
 		c.bufferline = append(c.bufferline, data...)
@@ -32,7 +32,7 @@ func (c *Controller) ProcessResponse(ctx context.Context, data []byte, err error
 				}
 
 				for _, display := range c.displayList {
-					model.NewResponse(out, false).Encode(display)
+					_ = model.NewResponse(out, false).Encode(display)
 				}
 			}
 
@@ -62,7 +62,7 @@ func (c *Controller) processLine(ctx context.Context, resp string) string {
 			c.status.CanRun = false
 		}
 
-		c.status.RemainingProgram = uint64(len(c.commandsToLaunch.commands) / 2)
+		c.status.RemainingProgram = int64(len(c.commandsToLaunch.commands) / 2) //nolint: mnd
 	}
 
 	_ = c.displayStatus()
