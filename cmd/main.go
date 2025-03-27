@@ -28,7 +28,7 @@ type options struct {
 	logger             *slog.Logger
 }
 
-func foo(ctx context.Context, opts *options, args []string) (*application.Client, error) {
+func initApp(ctx context.Context, opts *options, args []string) (*application.Client, error) {
 	var program *grbl.Program
 
 	if len(args) > 0 {
@@ -57,22 +57,24 @@ func foo(ctx context.Context, opts *options, args []string) (*application.Client
 	return app, nil
 }
 
-func mainCommand() (*cobra.Command, error) {
+func mainCommand() (*cobra.Command, *slog.Logger, error) {
 	var (
-		opts      options
 		forceGRPC bool
 	)
 
+	opts := options{
+		language: lang.DefaultLanguage,
+		stacker:  memory.New(),
+		logger:   slog.Default(),
+	}
+
 	gerbil, err := grbl.New()
 	if err != nil {
-		return nil, err
+		return nil, opts.logger, err
 	}
 
 	opts.availableLanguages = gerbil.AvailableLanguages()
 	opts.gerbil = gerbil
-	opts.language = lang.DefaultLanguage
-	opts.stacker = memory.New()
-	opts.logger = slog.Default()
 
 	output := &cobra.Command{
 		Use:   "cnc",
@@ -94,7 +96,7 @@ func mainCommand() (*cobra.Command, error) {
 		clientRPCCommand(&opts),
 	)
 
-	return output, nil
+	return output, opts.logger, nil
 }
 
 func joinLang(languages []lang.Language) string {
@@ -107,8 +109,10 @@ func joinLang(languages []lang.Language) string {
 }
 
 func main() {
-	cmd, err := mainCommand()
+	cmd, logger, err := mainCommand()
 	if err != nil {
+		logger.Error("could not initialize commands", "message", err.Error())
+
 		panic(err)
 	}
 
@@ -125,6 +129,8 @@ func main() {
 	}()
 
 	if err := cmd.ExecuteContext(ctx); err != nil {
+		logger.Error("could not execute command", "message", err.Error())
+
 		panic(err)
 	}
 }

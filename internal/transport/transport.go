@@ -12,6 +12,7 @@ type ResponseHandler func(context.Context, []byte, error)
 type Transporter interface {
 	Send(ctx context.Context, commands ...string) error
 	SetResponseHandler(ResponseHandler)
+	ConnectionStatus() string
 }
 
 // TransportCloser is a Transporter that can be closed.

@@ -76,6 +76,8 @@ func (c *Controller) SetTransporter(transporter transport.Transporter) {
 		c.transporterSetMutex.Unlock()
 	}()
 
+	c.status.Connection = transporter.ConnectionStatus()
+
 	c.transporter = transporter
 }
 

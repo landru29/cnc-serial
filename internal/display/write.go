@@ -58,7 +58,7 @@ func (s *Screen) displayStatus(status model.Status) {
 	coordinates := status.ToolCoordinates()
 
 	text := fmt.Sprintf(
-		"%s\t\t%s\tX: %+07.2f\t\tY: %+07.2f\t\tZ: %+07.2f\t%04d\t%s",
+		"%s\t\t%s\tX: %+07.2f\t\tY: %+07.2f\t\tZ: %+07.2f\t%04d\t%s\t%s",
 		status.RelativeCoordinates,
 		status.CurrentState(),
 		coordinates.XCoordinate,
@@ -66,6 +66,7 @@ func (s *Screen) displayStatus(status model.Status) {
 		coordinates.ZCoordinate,
 		status.RemainingProgram,
 		map[bool]string{true: "READY", false: "STOP "}[status.CanRun],
+		status.FormatedConnection(),
 	)
 	s.statusArea.SetText(text)
 

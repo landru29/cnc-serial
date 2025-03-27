@@ -6,7 +6,10 @@ import (
 	"strings"
 )
 
-const statusMagic = "status"
+const (
+	statusMagic            = "status"
+	formatedConnectionSize = 20
+)
 
 // Status is the CNC status.
 type Status struct {
@@ -20,6 +23,12 @@ type Status struct {
 	Type                ObjectName       `json:"type"`
 	RemainingProgram    uint64           `json:"remainingProgram"`
 	CanRun              bool             `json:"canRun"`
+	Connection          string           `json:"connection"`
+}
+
+// FormatedConnection is the connection status.
+func (s Status) FormatedConnection() string {
+	return (s.Connection + strings.Repeat(" ", formatedConnectionSize))[:formatedConnectionSize]
 }
 
 // Encode is the status Encoder.

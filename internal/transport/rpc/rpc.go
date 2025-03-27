@@ -2,12 +2,15 @@ package rpc
 
 import (
 	"context"
+	"errors"
+	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/landru29/cnc-serial/internal/transport"
 	rpcmodel "github.com/landru29/cnc-serial/internal/transport/rpc/model"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 )
 
 //go:generate protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative model/message.proto
@@ -16,6 +19,8 @@ var _ transport.TransportCloser = &Client{}
 
 const (
 	delayBetweenStatusSend = 500 * time.Millisecond
+
+	connectionReadyTimeout = 10 * time.Second
 )
 
 // Client is a serial client for sending commands.
@@ -25,19 +30,26 @@ type Client struct {
 	stop         chan struct{}
 	conn         *grpc.ClientConn
 	client       rpcmodel.CommandSenderClient
+	serverAddr   string
 }
 
 // New creates the client.
-func New(ctx context.Context, serverAddr string, opts ...grpc.DialOption) (*Client, error) {
+func New(ctx context.Context, log *slog.Logger, serverAddr string, opts ...grpc.DialOption) (*Client, error) {
 	conn, err := grpc.NewClient(serverAddr, opts...)
 	if err != nil {
 		return nil, err
 	}
 
 	output := &Client{
-		stop:   make(chan struct{}, 1),
-		conn:   conn,
-		client: rpcmodel.NewCommandSenderClient(conn),
+		stop:       make(chan struct{}, 1),
+		conn:       conn,
+		client:     rpcmodel.NewCommandSenderClient(conn),
+		serverAddr: serverAddr,
+	}
+
+	_, errConn := output.client.GetStatus(ctx, nil)
+	if errConn != nil {
+		return nil, errConn
 	}
 
 	go func() {
@@ -45,6 +57,11 @@ func New(ctx context.Context, serverAddr string, opts ...grpc.DialOption) (*Clie
 	}()
 
 	return output, nil
+}
+
+// ConnectionStatus implements the Transport.Transporter interface.
+func (c *Client) ConnectionStatus() string {
+	return c.serverAddr
 }
 
 // Send implements the Transport.Transporter interface.
@@ -105,4 +122,24 @@ func (c *Client) bind(ctx context.Context) {
 			time.Sleep(delayBetweenStatusSend)
 		}
 	}
+}
+
+func waitForConnectionReady(ctx context.Context, log *slog.Logger, conn *grpc.ClientConn) error {
+	state := conn.GetState()
+
+	ctx, cancel := context.WithTimeout(ctx, connectionReadyTimeout)
+	defer cancel()
+
+	log.Info("waiting for RPC connection ...")
+
+	for state != connectivity.Ready {
+		if !conn.WaitForStateChange(ctx, state) {
+			return errors.New("connection is not ready")
+		}
+		state = conn.GetState()
+	}
+
+	log.Info("ready")
+
+	return nil
 }

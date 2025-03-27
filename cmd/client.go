@@ -27,7 +27,7 @@ func clientSerialCommand(opts *options) *cobra.Command {
 				cancel()
 			}()
 
-			app, err := foo(ctx, opts, args)
+			app, err := initApp(ctx, opts, args)
 			if err != nil {
 				return err
 			}
@@ -43,10 +43,6 @@ func clientSerialCommand(opts *options) *cobra.Command {
 				}
 
 				app.SetTransport(serialClient)
-
-				defer func() {
-					_ = serialClient.Close()
-				}()
 
 				return app.Start()
 			}
@@ -71,7 +67,7 @@ func clientMockCommand(opts *options) *cobra.Command {
 				cancel()
 			}()
 
-			app, err := foo(ctx, opts, args)
+			app, err := initApp(ctx, opts, args)
 			if err != nil {
 				return err
 			}
@@ -84,9 +80,6 @@ func clientMockCommand(opts *options) *cobra.Command {
 
 			app.SetTransport(nopTransport)
 
-			defer func() {
-				_ = nopTransport.Close()
-			}()
 			return app.Start()
 		},
 	}
@@ -106,7 +99,7 @@ func clientRPCCommand(opts *options) *cobra.Command {
 				cancel()
 			}()
 
-			app, err := foo(ctx, opts, args)
+			app, err := initApp(ctx, opts, args)
 			if err != nil {
 				return err
 			}
@@ -116,16 +109,12 @@ func clientRPCCommand(opts *options) *cobra.Command {
 			}()
 
 			if addr != "" {
-				grpcTransport, err := rpc.New(ctx, addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+				grpcTransport, err := rpc.New(ctx, opts.logger, addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 				if err != nil {
 					return err
 				}
 
 				app.SetTransport(grpcTransport)
-
-				defer func() {
-					_ = grpcTransport.Close()
-				}()
 
 				return app.Start()
 			}

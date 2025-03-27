@@ -46,6 +46,14 @@ Flags:
 
 `filename`, if specified, must be a valide G-Code.
 
+## Debug
+
+You must install Delve
+
+```
+go install github.com/go-delve/delve/cmd/dlv@latest
+```
+
 ## Architecture
 
 ```mermaid

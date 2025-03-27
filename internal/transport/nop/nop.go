@@ -36,6 +36,11 @@ func New(ctx context.Context) *Client {
 	return output
 }
 
+// ConnectionStatus implements the Transport.Transporter interface.
+func (c *Client) ConnectionStatus() string {
+	return "mock"
+}
+
 // Send implements the Transport.Transporter interface.
 func (c *Client) Send(_ context.Context, _ ...string) error {
 	return nil

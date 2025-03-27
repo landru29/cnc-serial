@@ -25,6 +25,8 @@ type Client struct {
 	handler      transport.ResponseHandler
 	handlerMutex sync.Mutex
 	stop         chan struct{}
+	name         string
+	bitRate      int
 }
 
 // New creates the client.
@@ -37,7 +39,9 @@ func New(ctx context.Context, name string, bitRate int) (*Client, error) {
 	}
 
 	output := Client{
-		port: port,
+		port:    port,
+		name:    name,
+		bitRate: bitRate,
 	}
 
 	go func() {
@@ -45,6 +49,11 @@ func New(ctx context.Context, name string, bitRate int) (*Client, error) {
 	}()
 
 	return &output, nil
+}
+
+// ConnectionStatus implements the Transport.Transporter interface.
+func (c *Client) ConnectionStatus() string {
+	return fmt.Sprintf("%s@%d", c.name, c.bitRate)
 }
 
 // Send implements the Transport.Transporter interface.
