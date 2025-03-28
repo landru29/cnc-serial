@@ -32,7 +32,6 @@ type Controller struct {
 	status               model.Status
 	programmer           gcode.Programmer
 	programmerSetMutex   sync.Mutex
-	commandsToLaunch     *commandSet
 	bufferline           []byte
 	regexpProcessProgram *regexp.Regexp
 }
@@ -48,7 +47,6 @@ func New(
 		stackPusher:          stackPusher,
 		displayList:          displayList,
 		processer:            processer,
-		commandsToLaunch:     &commandSet{},
 		regexpProcessProgram: regexp.MustCompile(`(?i)p([-+\d]+)`),
 	}
 

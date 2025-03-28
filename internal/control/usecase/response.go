@@ -55,17 +55,29 @@ func (c *Controller) processLine(ctx context.Context, resp string) string {
 
 	// launch next program commands if available.
 	if strings.ToUpper(string(c.status.State)) == "IDLE" && c.status.CanRun {
-		cmd, found := c.commandsToLaunch.next()
-		if found {
+		cmd, err := c.programmer.NextCommandToExecute()
+		if err == nil {
 			_ = c.PushCommands(ctx, cmd)
-		} else {
-			c.status.CanRun = false
-		}
+			_ = c.PushCommands(ctx, c.processer.CommandStatus())
 
-		c.status.RemainingProgram = int64(len(c.commandsToLaunch.commands) / 2) //nolint: mnd
+			_ = c.displayProgram()
+		}
 	}
 
 	_ = c.displayStatus()
 
 	return ""
+}
+
+func (c *Controller) displayProgram() error {
+	progModel := c.programmer.ToModel()
+	for _, display := range c.displayList {
+		if progModel != nil {
+			if err := progModel.Encode(display); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

@@ -22,7 +22,7 @@ func TestProgram(t *testing.T) {
 
 	for _, expected := range []struct {
 		cmd  string
-		line int
+		line int64
 	}{
 		{line: 5, cmd: "G17 G90"},
 		{line: 6, cmd: "G21"},
@@ -32,10 +32,9 @@ func TestProgram(t *testing.T) {
 		{line: 22, cmd: "G0 X0.000 Y0.000"},
 		{line: 23, cmd: "G0 X22.820 Y22.820"},
 	} {
-		cmd, err := prog.ReadNextInstruction()
-		require.NoError(t, err)
+		require.NoError(t, prog.ReadNextInstruction())
 
 		assert.Equal(t, expected.line, prog.CurrentLine())
-		require.Equal(t, expected.cmd, cmd)
+		require.Equal(t, expected.cmd, prog.CurrentCommand())
 	}
 }

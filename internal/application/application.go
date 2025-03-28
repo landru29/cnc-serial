@@ -45,7 +45,7 @@ func NewClient(
 	output.commander = usecase.New(ctx, stacker, processer, output)
 
 	if program != nil {
-		if _, err := program.ReadNextInstruction(); err != nil {
+		if err := program.ReadNextInstruction(); err != nil {
 			return nil, err
 		}
 

@@ -2,10 +2,10 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"strings"
 
+	"github.com/landru29/cnc-serial/internal/errors"
 	"github.com/landru29/cnc-serial/internal/model"
 )
 
@@ -19,7 +19,7 @@ func (c *Controller) PushCommands(ctx context.Context, commands ...string) error
 	}()
 
 	if c.transporter == nil {
-		return errors.New("missing transporter")
+		return errors.ErrMissingTransporter
 	}
 
 	for _, text := range commands {
@@ -28,9 +28,7 @@ func (c *Controller) PushCommands(ctx context.Context, commands ...string) error
 		if command == "" {
 			c.status.CanRun = true
 
-			if err := c.stepProgram(1); err != nil {
-				return err
-			}
+			c.programmer.SetLinesToExecute(1)
 
 			continue
 		}
@@ -63,16 +61,7 @@ func (c *Controller) PushCommands(ctx context.Context, commands ...string) error
 				}
 			}
 
-			if cmdCount > 0 {
-				if err := c.stepProgram(cmdCount); err != nil {
-					return err
-				}
-			} else {
-				var err error
-				for err == nil {
-					err = c.stepProgram(1)
-				}
-			}
+			c.programmer.SetLinesToExecute(cmdCount)
 
 			c.status.CanRun = true
 

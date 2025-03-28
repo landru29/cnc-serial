@@ -31,18 +31,38 @@ make build
 ## Usage
 
 ```
-CNC Serial monitor
+CNC monitor
 
 Usage:
-  cnc-serial [filename] [flags]
+  cnc [command]
+
+Available Commands:
+  agent       manage the local agent
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  mock        CNC mock monitor
+  rpc         CNC RPC monitor
+  serial      CNC Serial monitor
 
 Flags:
-  -b, --bit-rate int   Bit rate (default 115200)
-  -d, --dry-run        Dry run (do not open serial port)
-  -h, --help           help for cnc-serial
-  -l, --lang lang      language (available: en, fr) (default en)
-  -p, --port string    Port name
+      --grpc        RPC connection
+  -h, --help        help for cnc
+  -l, --lang lang   language (available: en, fr) (default en)
 ```
+
+```mermaid
+graph TD;
+
+CNC-->mock
+CNC-->serial
+CNC-->rpc
+CNC-->agent
+agent-->rpcAgent[rpc]
+rpcAgent-->rpcAgentSerial[serial]
+rpcAgent-->rpcAgentMock[mock]
+
+```
+
 
 `filename`, if specified, must be a valide G-Code.
 
@@ -75,13 +95,22 @@ graph TD;
     Layout display
     );
 
+    serial([serial]);
+    nop([nop]);
+    rpc([RPC
+    client]);
+
     Controller-->Stacker;
     Controller-->GCodeProcessor;
     Controller-->Programmer;
     Controller-->Transporter;
-    Transporter-->serial([serial]);
-    Transporter-->nop([nop]);
+    Transporter-->serial;
+    Transporter-->nop;
+    Transporter-->rpc;
     Screen-->Controller;
     Controller-->Screen;
     Screen-->Stacker;
+
+    rpcServer(RPC
+    server)-->Transporter
 ```

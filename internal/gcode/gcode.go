@@ -20,9 +20,27 @@ type Processor interface {
 
 // Programmer is the program interface.
 type Programmer interface {
-	CurrentLine() int
+	// CurrentLine is the line of the current instruction.
+	CurrentLine() int64
+
+	// CurrentCommand is the current selected command.
 	CurrentCommand() string
-	ReadNextInstruction() (string, error)
+
+	// Content is the line of the current instruction.
 	Content() string
+
+	// Reset reset the program to the first command.
+	Reset() error
+
+	// SetLinesToExecute defines the sequence to execute.
+	SetLinesToExecute(count int64)
+
+	// ToModel is the data converter.
 	ToModel() *model.Program
+
+	// ReadNextInstruction move the pointer to the next instruction and read it.
+	ReadNextInstruction() error
+
+	// NextCommandToExecute delevers the next instruction to execute depending on what the user requested.
+	NextCommandToExecute() (string, error)
 }

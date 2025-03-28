@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/landru29/cnc-serial/internal/errors"
 	"github.com/landru29/cnc-serial/internal/transport"
 	"github.com/landru29/cnc-serial/internal/transport/nop"
 	"github.com/landru29/cnc-serial/internal/transport/rpc"
@@ -100,7 +100,7 @@ func rpcSerialCommand(opts *options, addr *string) *cobra.Command {
 				return nil
 			}
 
-			return errors.New("no communicationWith the machine")
+			return errors.ErrNoCommunicationWithMachine
 		},
 	}
 

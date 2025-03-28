@@ -1,10 +1,10 @@
 package grbl
 
 import (
-	"os"
 	"strconv"
 	"strings"
 
+	"github.com/landru29/cnc-serial/internal/errors"
 	"github.com/landru29/cnc-serial/internal/model"
 )
 
@@ -15,14 +15,14 @@ func (g Gerbil) UnmarshalStatus(statusString string) (*model.Status, error) {
 	statusString = strings.TrimSpace(statusString)
 
 	if len(statusString) < 5 || statusString[0] != '<' || statusString[len(statusString)-1] != '>' {
-		return nil, os.ErrNotExist
+		return nil, errors.ErrUnrecognizedStatus
 	}
 
 	statusString = statusString[1 : len(statusString)-1]
 
 	statusMatch := g.stateRegexp.FindAllStringSubmatch(statusString, -1)
 	if len(statusMatch) < 1 || len(statusMatch[0]) < 2 {
-		return nil, os.ErrNotExist
+		return nil, errors.ErrUnrecognizedStatus
 	}
 
 	output.State = model.State(statusMatch[0][1])
@@ -142,7 +142,7 @@ func (g Gerbil) decodeNext(statusString string, output *model.Status) string { /
 
 func (g Gerbil) readNumber(statusString string) (string, float64, error) {
 	if len(statusString) == 0 {
-		return statusString, 0, os.ErrNotExist
+		return statusString, 0, errors.ErrUnrecognizedStatus
 	}
 
 	match := g.numberRegexp.FindAllStringSubmatch(statusString, -1)

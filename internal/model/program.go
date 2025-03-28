@@ -11,7 +11,7 @@ import (
 // Program is a program with execution cursor.
 type Program struct {
 	Data        []byte
-	CurrentLine int
+	CurrentLine int64
 }
 
 // Encode is the program encoder.
@@ -46,6 +46,6 @@ func DecodeProgram(data string) *Program {
 
 	return &Program{
 		Data:        prog,
-		CurrentLine: int(currentLine),
+		CurrentLine: currentLine,
 	}
 }

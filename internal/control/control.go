@@ -11,7 +11,6 @@ import (
 // Commander is the interface for sending commands.
 type Commander interface {
 	PushCommands(ctx context.Context, commands ...string) error
-	PushProgramCommands(commands ...string) error
 	MoveRelative(ctx context.Context, offset float64, axisName string) error
 	SetTransporter(transporter transport.Transporter)
 	SetProgrammer(programmer gcode.Programmer)

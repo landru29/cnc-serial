@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"errors"
 
+	"github.com/landru29/cnc-serial/internal/errors"
 	"github.com/landru29/cnc-serial/internal/transport/nop"
 	"github.com/landru29/cnc-serial/internal/transport/rpc"
 	"github.com/landru29/cnc-serial/internal/transport/serial"
@@ -47,7 +47,7 @@ func clientSerialCommand(opts *options) *cobra.Command {
 				return app.Start()
 			}
 
-			return errors.New("no communication with the machine")
+			return errors.ErrNoCommunicationWithMachine
 		},
 	}
 
@@ -119,7 +119,7 @@ func clientRPCCommand(opts *options) *cobra.Command {
 				return app.Start()
 			}
 
-			return errors.New("no communication with the machine")
+			return errors.ErrNoCommunicationWithMachine
 		},
 	}
 

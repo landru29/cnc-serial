@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 
+	apperrors "github.com/landru29/cnc-serial/internal/errors"
 	"github.com/landru29/cnc-serial/internal/gcode"
 	"github.com/landru29/cnc-serial/internal/model"
 )
@@ -16,8 +17,9 @@ var _ gcode.Programmer = &Program{}
 type Program struct {
 	content             []byte
 	buffer              *bytes.Buffer
-	carriageReturnCount int
+	carriageReturnCount int64
 	currentCommand      string
+	commandsToBeRead    int64
 }
 
 // NewProgram creates the program.
@@ -33,7 +35,42 @@ func NewProgram(data io.Reader) (*Program, error) {
 	}, nil
 }
 
-// ToModel is the data converter.
+// Reset implements the gcode.Programmer interface.
+func (p *Program) Reset() error {
+	p.buffer = bytes.NewBuffer(p.content)
+
+	p.carriageReturnCount = 0
+
+	p.currentCommand = ""
+
+	p.commandsToBeRead = 0
+
+	return p.ReadNextInstruction()
+}
+
+// SetLinesToExecute implements the gcode.Programmer interface.
+func (p *Program) SetLinesToExecute(count int64) {
+	p.commandsToBeRead = count
+}
+
+// NextCommandToExecute implements the gcode.Programmer interface.
+func (p *Program) NextCommandToExecute() (string, error) {
+	defer func() {
+		if p.commandsToBeRead > 0 {
+			p.commandsToBeRead--
+		}
+	}()
+
+	if p.commandsToBeRead != 0 {
+		cmdToSend := p.currentCommand
+
+		return cmdToSend, p.ReadNextInstruction()
+	}
+
+	return "", apperrors.ErrProgramIdle
+}
+
+// ToModel implements the gcode.Programmer interface.
 func (p *Program) ToModel() *model.Program {
 	if p == nil {
 		return nil
@@ -45,36 +82,36 @@ func (p *Program) ToModel() *model.Program {
 	}
 }
 
-// CurrentLine is the line of the current instruction.
-func (p Program) CurrentLine() int {
+// CurrentLine implements the gcode.Programmer interface.
+func (p Program) CurrentLine() int64 {
 	return p.carriageReturnCount
 }
 
-// CurrentCommand is the current selected command.
+// CurrentCommand implements the gcode.Programmer interface.
 func (p Program) CurrentCommand() string {
 	return p.currentCommand
 }
 
-// Content is the line of the current instruction.
+// Content implements the gcode.Programmer interface..
 func (p Program) Content() string {
 	return string(p.content)
 }
 
-// ReadNextInstruction move the pointer to the next instruction and read it.
-func (p *Program) ReadNextInstruction() (string, error) {
+// ReadNextInstruction implements the gcode.Programmer interface.
+func (p *Program) ReadNextInstruction() error {
 	if p == nil || p.buffer == nil {
-		return "", nil
+		return nil
 	}
 
 	if err := p.skipComments(); err != nil {
-		return "", err
+		return err
 	}
 
 	line := p.readNextChars(false, '\n', ';', '(')
 
 	p.currentCommand = strings.TrimSpace(line)
 
-	return p.currentCommand, nil
+	return nil
 }
 
 func (p *Program) skipSpaces() {

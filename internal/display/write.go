@@ -103,10 +103,10 @@ func (s *Screen) displayProgram(program model.Program) {
 
 	_, _, _, height := s.progArea.GetRect() //nolint: dogsled
 
-	scrollTo := 0
+	scrollTo := int64(0)
 
-	if program.CurrentLine > height/2 {
-		scrollTo = program.CurrentLine - height/3 //nolint: mnd
+	if program.CurrentLine > int64(height)/2 {
+		scrollTo = program.CurrentLine - int64(height)/3 //nolint: mnd
 	}
 
 	for idx := range splitter {
@@ -114,13 +114,13 @@ func (s *Screen) displayProgram(program model.Program) {
 
 		endColor := ""
 
-		if idx == program.CurrentLine {
+		if int64(idx) == program.CurrentLine {
 			startColor = "[#00ff00]"
 
 			endColor = "[#c0c0c0]"
 		}
 
-		if idx < program.CurrentLine {
+		if int64(idx) < program.CurrentLine {
 			startColor = "[#505050]"
 		}
 
@@ -129,5 +129,5 @@ func (s *Screen) displayProgram(program model.Program) {
 
 	s.progArea.SetText(strings.Join(output, "\n"))
 
-	s.progArea.ScrollTo(scrollTo, 0)
+	s.progArea.ScrollTo(int(scrollTo), 0)
 }
