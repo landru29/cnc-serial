@@ -10,7 +10,7 @@ import (
 )
 
 // PushCommands implements the control.Commander interface.
-func (c *Controller) PushCommands(ctx context.Context, commands ...string) error { //nolint: funlen,gocognit,cyclop
+func (c *Controller) PushCommands(ctx context.Context, fromProgram bool, commands ...string) error { //nolint: funlen,gocognit,cyclop
 	c.pushMutex.Lock()
 	c.transporterSetMutex.Lock()
 	defer func() {
@@ -26,6 +26,10 @@ func (c *Controller) PushCommands(ctx context.Context, commands ...string) error
 		command := strings.TrimSpace(text)
 
 		if command == "" {
+			if fromProgram {
+				continue
+			}
+
 			c.status.CanRun = true
 
 			c.programmer.SetLinesToExecute(1)
@@ -37,6 +41,16 @@ func (c *Controller) PushCommands(ctx context.Context, commands ...string) error
 			c.status.CanRun = false
 
 			_ = c.displayStatus()
+
+			continue
+		}
+
+		if command[0] == 'r' || command[0] == 'R' {
+			c.status.CanRun = false
+
+			_ = c.programmer.Reset()
+
+			_ = c.displayProgram()
 
 			continue
 		}
@@ -68,16 +82,22 @@ func (c *Controller) PushCommands(ctx context.Context, commands ...string) error
 			continue
 		}
 
+		// Fix typing errors
+		text = strings.ReplaceAll(strings.ToUpper(text), "O", "0")
+
+		// Display.
 		for _, display := range c.displayList {
 			if text != c.processer.CommandStatus() {
 				_ = model.NewRequest(c.processer.Colorize(text)).Encode(display)
 			}
 		}
 
+		// Send command.
 		if err := c.transporter.Send(ctx, text); err != nil {
 			return err
 		}
 
+		// decode command.
 		switch strings.ToUpper(strings.Split(text, " ")[0]) {
 		case c.processer.CommandRelativeCoordinate():
 			c.status.RelativeCoordinates = true
@@ -90,7 +110,8 @@ func (c *Controller) PushCommands(ctx context.Context, commands ...string) error
 			_ = c.displayStatus()
 		}
 
-		if text != c.processer.CommandStatus() {
+		// Remember command.
+		if !fromProgram && text != c.processer.CommandStatus() {
 			c.stackPusher.Push(strings.ToUpper(text))
 		}
 	}

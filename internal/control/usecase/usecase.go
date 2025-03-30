@@ -58,7 +58,7 @@ func New(
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				_ = output.PushCommands(ctx, processer.CommandStatus())
+				_ = output.PushCommands(ctx, true, processer.CommandStatus())
 			}
 		}
 	}()
@@ -110,5 +110,5 @@ func (c *Controller) MoveRelative(ctx context.Context, offset float64, axisName 
 		commands = commands[1:2]
 	}
 
-	return c.PushCommands(ctx, commands...)
+	return c.PushCommands(ctx, true, commands...)
 }

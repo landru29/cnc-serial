@@ -57,8 +57,8 @@ func (c *Controller) processLine(ctx context.Context, resp string) string {
 	if strings.ToUpper(string(c.status.State)) == "IDLE" && c.status.CanRun {
 		cmd, err := c.programmer.NextCommandToExecute()
 		if err == nil {
-			_ = c.PushCommands(ctx, cmd)
-			_ = c.PushCommands(ctx, c.processer.CommandStatus())
+			_ = c.PushCommands(ctx, true, cmd)
+			_ = c.PushCommands(ctx, true, c.processer.CommandStatus())
 
 			_ = c.displayProgram()
 		}

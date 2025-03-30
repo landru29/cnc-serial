@@ -9,7 +9,10 @@ import (
 	"github.com/rivo/tview"
 )
 
-const enterCommandLabel = "Enter command"
+const (
+	enterCommandLabel = "Enter command"
+	defaultHelp       = "p[nb]: process program | p-1: process all the program | s: stop | r: reset"
+)
 
 func (s *Screen) buildView(ctx context.Context, processer gcode.Processor) {
 	s.display = tview.NewApplication()
@@ -60,7 +63,7 @@ func (s *Screen) buildView(ctx context.Context, processer gcode.Processor) {
 				return
 			}
 
-			_ = s.commander.PushCommands(ctx, text)
+			_ = s.commander.PushCommands(ctx, false, text)
 
 			s.userInput.SetText("")
 		})
@@ -90,7 +93,7 @@ func (s *Screen) buildView(ctx context.Context, processer gcode.Processor) {
 			return
 		}
 
-		s.helpArea.SetText("p[nb] process program | p-1 process all the program | s STOP")
+		s.helpArea.SetText(defaultHelp)
 	})
 
 	s.logArea.SetBorder(true)
