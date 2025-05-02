@@ -88,6 +88,7 @@ func mainCommand() (*cobra.Command, *slog.Logger, error) {
 	)
 
 	output.AddCommand(
+		cleanCommand(),
 		agentCommand(&opts),
 		clientSerialCommand(&opts),
 		clientMockCommand(&opts),

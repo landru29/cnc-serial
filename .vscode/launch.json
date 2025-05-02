@@ -59,6 +59,14 @@
             "host": "localhost",
             "cwd": "${workspaceFolder}",
             "trace": "verbose"
-        }
+        },
+        {
+            "name": "clean",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd",
+            "args": ["clean", "../internal/gcode/grbl/testdata/prog01.gcode"],
+        },
     ]
 }
