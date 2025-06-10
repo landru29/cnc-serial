@@ -6,6 +6,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/landru29/cnc-serial/internal/gcode"
+	"github.com/landru29/cnc-serial/internal/gpm"
 	"github.com/rivo/tview"
 )
 
@@ -16,6 +17,12 @@ const (
 
 func (s *Screen) buildView(ctx context.Context, processer gcode.Processor) {
 	s.display = tview.NewApplication()
+
+	screen, err := gpm.NewScreen()
+
+	if err == nil {
+		s.display.SetScreen(screen)
+	}
 
 	s.logArea = tview.NewTextView().
 		SetDynamicColors(true).

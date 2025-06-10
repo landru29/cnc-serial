@@ -5,6 +5,7 @@ go 1.23
 require (
 	github.com/gdamore/tcell/v2 v2.7.1
 	github.com/golang/protobuf v1.5.4
+	github.com/jackdoe/go-gpmctl v0.0.0-20231210204613-737e8a242925
 	github.com/rivo/tview v0.0.0-20241227133733-17b7edb88c57
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.7.0
