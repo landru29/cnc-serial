@@ -51,8 +51,9 @@ func clientSerialCommand(opts *options) *cobra.Command {
 		},
 	}
 
-	output.PersistentFlags().IntVarP(&bitRate, "bit-rate", "b", defaultBitRate, "Bit rate")
-	output.PersistentFlags().StringVarP(&portName, "port", "p", defaultPort(), "Port name")
+	output.Flags().IntVarP(&bitRate, "bit-rate", "b", defaultBitRate, "Bit rate")
+	output.Flags().StringVarP(&portName, "port", "p", defaultPort(), "Port name")
+	output.Flags().Float64VarP(&opts.navigationInc, "nav-inc", "", 1.0, "Navigation increment in millimeters")
 
 	return output
 }
@@ -83,6 +84,8 @@ func clientMockCommand(opts *options) *cobra.Command {
 			return app.Start()
 		},
 	}
+
+	output.Flags().Float64VarP(&opts.navigationInc, "nav-inc", "", 1.0, "Navigation increment in millimeters")
 
 	return output
 }
@@ -124,6 +127,7 @@ func clientRPCCommand(opts *options) *cobra.Command {
 	}
 
 	output.Flags().StringVarP(&addr, "address", "a", "0.0.0.0:1324", "RPC server address")
+	output.Flags().Float64VarP(&opts.navigationInc, "nav-inc", "", 1.0, "Navigation increment in millimeters")
 
 	return output
 }

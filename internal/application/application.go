@@ -31,8 +31,9 @@ func NewClient(
 	stacker stack.Stacker,
 	processer gcode.Processor,
 	program gcode.Programmer,
+	navigationInc float64,
 ) (*Client, error) {
-	screen := display.New(ctx, stacker, processer)
+	screen := display.New(ctx, stacker, processer, navigationInc)
 
 	output := &Client{
 		stack:     stacker,

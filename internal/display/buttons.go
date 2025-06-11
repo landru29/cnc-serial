@@ -66,18 +66,17 @@ func (s *Screen) newAxisButton(ctx context.Context, name string, up string, down
 	output.down.SetBorder(true).SetRect(0, 0, 3, 3) //nolint: mnd
 
 	output.up.SetSelectedFunc(func() {
-		output.move(ctx, s.commander, true)
+		output.move(ctx, s.commander, true, s.BaseScreen.navigationInc)
 	})
 
 	output.down.SetSelectedFunc(func() {
-		output.move(ctx, s.commander, false)
+		output.move(ctx, s.commander, false, s.BaseScreen.navigationInc)
 	})
 
 	return output
 }
 
-func (a axisButtons) move(ctx context.Context, commander control.Commander, up bool) {
-	step := 10.0
+func (a axisButtons) move(ctx context.Context, commander control.Commander, up bool, step float64) {
 	if !up {
 		step *= -1.0
 	}

@@ -26,13 +26,15 @@ type BaseScreen struct {
 	currentLang    lang.Language
 	bufferData     string
 	bufferMutex    sync.Mutex
+	navigationInc  float64
 }
 
 // New creates a screen.
-func New(ctx context.Context, stackRetriever stack.Retriever, processer gcode.Processor) *Screen {
+func New(ctx context.Context, stackRetriever stack.Retriever, processer gcode.Processor, navigationInc float64) *Screen {
 	output := Screen{
 		BaseScreen: BaseScreen{
 			stackRetriever: stackRetriever,
+			navigationInc:  navigationInc,
 		},
 	}
 

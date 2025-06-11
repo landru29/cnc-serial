@@ -22,5 +22,5 @@ func (g Gerbil) CommandRelativeCoordinate() string {
 
 // MoveAxis implements the gcode.Processor interface.
 func (g Gerbil) MoveAxis(offset float64, axisName string) string {
-	return fmt.Sprintf("G1 %s%.3f", strings.ToUpper(axisName), offset)
+	return fmt.Sprintf("G0 %s%.3f", strings.ToUpper(axisName), offset)
 }

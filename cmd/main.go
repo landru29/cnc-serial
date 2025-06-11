@@ -26,6 +26,7 @@ type options struct {
 	gerbil             *grbl.Gerbil
 	stacker            *memory.Stack
 	logger             *slog.Logger
+	navigationInc      float64
 }
 
 func initApp(ctx context.Context, opts *options, args []string) (*application.Client, error) {
@@ -47,7 +48,7 @@ func initApp(ctx context.Context, opts *options, args []string) (*application.Cl
 		}
 	}
 
-	app, err := application.NewClient(ctx, opts.stacker, opts.gerbil, program)
+	app, err := application.NewClient(ctx, opts.stacker, opts.gerbil, program, opts.navigationInc)
 	if err != nil {
 		return nil, err
 	}
