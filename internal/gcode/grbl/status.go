@@ -62,62 +62,62 @@ func (g Gerbil) decodeNext(statusString string, output *model.Status) string { /
 	case "mpos":
 		output.Machine = &model.Coordinates{}
 
-		if statusString, output.Machine.XCoordinate, err = g.readNumber(statusString); err != nil {
+		if statusString, output.Machine.XCoordinate, err = g.readFloatNumber(statusString); err != nil {
 			return ""
 		}
 
-		if statusString, output.Machine.YCoordinate, err = g.readNumber(statusString); err != nil {
+		if statusString, output.Machine.YCoordinate, err = g.readFloatNumber(statusString); err != nil {
 			return ""
 		}
 
-		if statusString, output.Machine.ZCoordinate, err = g.readNumber(statusString); err != nil {
+		if statusString, output.Machine.ZCoordinate, err = g.readFloatNumber(statusString); err != nil {
 			return ""
 		}
 
 	case "wpos":
 		output.Tool = &model.Coordinates{}
 
-		if statusString, output.Tool.XCoordinate, err = g.readNumber(statusString); err != nil {
+		if statusString, output.Tool.XCoordinate, err = g.readFloatNumber(statusString); err != nil {
 			return ""
 		}
 
-		if statusString, output.Tool.YCoordinate, err = g.readNumber(statusString); err != nil {
+		if statusString, output.Tool.YCoordinate, err = g.readFloatNumber(statusString); err != nil {
 			return ""
 		}
 
-		if statusString, output.Tool.ZCoordinate, err = g.readNumber(statusString); err != nil {
+		if statusString, output.Tool.ZCoordinate, err = g.readFloatNumber(statusString); err != nil {
 			return ""
 		}
 
 	case "fs":
 		output.Speed = &model.Speed{}
 
-		if statusString, output.Speed.FeedRate, err = g.readNumber(statusString); err != nil {
+		if statusString, output.Speed.FeedRate, err = g.readFloatNumber(statusString); err != nil {
 			return ""
 		}
 
-		if statusString, output.Speed.Spindle, err = g.readNumber(statusString); err != nil {
+		if statusString, output.Speed.Spindle, err = g.readFloatNumber(statusString); err != nil {
 			return ""
 		}
 
 	case "wco":
 		output.ToolOffset = &model.Coordinates{}
 
-		if statusString, output.ToolOffset.XCoordinate, err = g.readNumber(statusString); err != nil {
+		if statusString, output.ToolOffset.XCoordinate, err = g.readFloatNumber(statusString); err != nil {
 			return ""
 		}
 
-		if statusString, output.ToolOffset.YCoordinate, err = g.readNumber(statusString); err != nil {
+		if statusString, output.ToolOffset.YCoordinate, err = g.readFloatNumber(statusString); err != nil {
 			return ""
 		}
 
-		if statusString, output.ToolOffset.ZCoordinate, err = g.readNumber(statusString); err != nil {
+		if statusString, output.ToolOffset.ZCoordinate, err = g.readFloatNumber(statusString); err != nil {
 			return ""
 		}
 	case "alarm":
 		var alarm float64
 
-		if statusString, alarm, err = g.readNumber(statusString); err != nil {
+		if statusString, alarm, err = g.readFloatNumber(statusString); err != nil {
 			return ""
 		}
 
@@ -132,6 +132,27 @@ func (g Gerbil) decodeNext(statusString string, output *model.Status) string { /
 					statusString[0] < 'Z')) {
 			statusString = statusString[1:]
 		}
+	case "bf":
+		if statusString, output.Buffer.AvailableBlocks, err = g.readIntNumber(statusString); err != nil {
+			return ""
+		}
+
+		if statusString, output.Buffer.AvailableBuffer, err = g.readIntNumber(statusString); err != nil {
+			return ""
+		}
+
+	case "ov":
+		if statusString, output.Overrides.Feed, err = g.readIntNumber(statusString); err != nil {
+			return ""
+		}
+
+		if statusString, output.Overrides.Rapid, err = g.readIntNumber(statusString); err != nil {
+			return ""
+		}
+
+		if statusString, output.Overrides.Spindle, err = g.readIntNumber(statusString); err != nil {
+			return ""
+		}
 
 	default:
 		return ""
@@ -140,17 +161,26 @@ func (g Gerbil) decodeNext(statusString string, output *model.Status) string { /
 	return statusString
 }
 
-func (g Gerbil) readNumber(statusString string) (string, float64, error) {
+func (g Gerbil) readFloatNumber(statusString string) (string, float64, error) {
 	if len(statusString) == 0 {
 		return statusString, 0, errors.ErrUnrecognizedStatus
 	}
 
 	match := g.numberRegexp.FindAllStringSubmatch(statusString, -1)
 	if len(match) == 0 || len(match[0]) < 2 {
-		return g.readNumber(statusString[1:])
+		return g.readFloatNumber(statusString[1:])
 	}
 
 	out, err := strconv.ParseFloat(match[0][1], 64)
 
 	return statusString[len(match[0][1]):], out, err
+}
+
+func (g Gerbil) readIntNumber(statusString string) (string, int64, error) {
+	outStr, value, err := g.readFloatNumber(statusString)
+	if err != nil {
+		return outStr, 0, err
+	}
+
+	return outStr, int64(value), nil
 }

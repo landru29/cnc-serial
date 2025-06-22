@@ -26,8 +26,8 @@ func (c *Controller) ProcessResponse(ctx context.Context, data []byte, err error
 
 		if len(lineSplitter) > 1 {
 			for idx := 0; idx < len(lineSplitter)-1; idx++ {
-				out := c.processLine(ctx, string(lineSplitter[idx]))
-				if out == "" {
+				out := c.processLine(ctx, strings.TrimSpace(string(lineSplitter[idx])))
+				if strings.TrimSpace(out) == "" {
 					continue
 				}
 

@@ -20,6 +20,10 @@ func (s *Screen) Write(data []byte) (int, error) {
 	}
 
 	for _, line := range splitter {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
 		if status := model.DecodeStatus(line); status != nil {
 			s.displayStatus(*status)
 

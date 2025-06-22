@@ -47,7 +47,7 @@
             "mode": "auto",
             "program": "${workspaceFolder}/cmd",
             "console": "integratedTerminal",
-            "args": ["serial", "--port", "/dev/ttyUSB0"]
+            "args": ["serial", "--port", "/dev/ttyUSB1"]
         },
         {
             "name": "Debug-remote",

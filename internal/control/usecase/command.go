@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -90,6 +91,19 @@ func (c *Controller) PushCommands(ctx context.Context, fromProgram bool, command
 			if text != c.processer.CommandStatus() {
 				_ = model.NewRequest(c.processer.Colorize(text)).Encode(display)
 			}
+		}
+
+		if len(text) > 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X') {
+			code, err := strconv.ParseInt(text[2:], 16, 64)
+			if err == nil {
+				text = fmt.Sprintf("%c", code)
+
+				if err := c.transporter.Send(ctx, text); err != nil {
+					return err
+				}
+			}
+
+			return nil
 		}
 
 		// Send command.

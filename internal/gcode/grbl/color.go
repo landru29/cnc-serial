@@ -20,6 +20,8 @@ func (g Gerbil) Colorize(text string) string {
 		case strings.HasPrefix(word, "Y"):
 			newSplitter[idx] = "[#69f1ff]" + word
 		case strings.HasPrefix(word, "Z"):
+			newSplitter[idx] = "[#ff33ff]" + word
+		case strings.HasPrefix(word, "$"):
 			newSplitter[idx] = "[#ff0000]" + word
 		default:
 			newSplitter[idx] = "[white]" + word

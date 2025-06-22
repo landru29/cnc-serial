@@ -24,6 +24,8 @@ type Status struct {
 	RemainingProgram    int64            `json:"remainingProgram"`
 	CanRun              bool             `json:"canRun"`
 	Connection          string           `json:"connection"`
+	Buffer              BufferState      `json:"buffer"`
+	Overrides           Overrides        `json:"feedOverride"`
 }
 
 // FormatedConnection is the connection status.
@@ -152,4 +154,17 @@ func (r RelativeAbsolute) String() string {
 	}
 
 	return "ABS"
+}
+
+// BufferState is the status of the buffer.
+type BufferState struct {
+	AvailableBlocks int64 `json:"availableBloks"`
+	AvailableBuffer int64 `json:"availableBuffer"`
+}
+
+// Overrides is the defined feeds.
+type Overrides struct {
+	Feed    int64 `json:"feedX"`
+	Rapid   int64 `json:"feedY"`
+	Spindle int64 `json:"feedZ"`
 }
