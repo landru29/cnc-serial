@@ -13,11 +13,6 @@ import (
 )
 
 func clientSerialCommand(opts *options) *cobra.Command {
-	var (
-		bitRate  int
-		portName string
-	)
-
 	output := &cobra.Command{
 		Use:   "serial [filename]",
 		Short: "CNC Serial monitor",
@@ -36,8 +31,8 @@ func clientSerialCommand(opts *options) *cobra.Command {
 				_ = app.Close()
 			}()
 
-			if portName != "" && bitRate > 0 {
-				serialClient, err := serial.New(ctx, portName, bitRate)
+			if opts.Serial.PortName != "" && opts.Serial.BitRate > 0 {
+				serialClient, err := serial.New(ctx, opts.Serial.PortName, opts.Serial.BitRate)
 				if err != nil {
 					return err
 				}
@@ -51,9 +46,9 @@ func clientSerialCommand(opts *options) *cobra.Command {
 		},
 	}
 
-	output.Flags().IntVarP(&bitRate, "bit-rate", "b", defaultBitRate, "Bit rate")
-	output.Flags().StringVarP(&portName, "port", "p", defaultPort(), "Port name")
-	output.Flags().Float64VarP(&opts.navigationInc, "nav-inc", "", 1.0, "Navigation increment in millimeters")
+	output.Flags().IntVarP(&opts.Serial.BitRate, "bit-rate", "b", opts.Serial.BitRate, "Bit rate")
+	output.Flags().VarP(&opts.Serial.PortName, "port", "p", "Port name")
+	output.Flags().Float64VarP(&opts.NavigationInc, "nav-inc", "", opts.NavigationInc, "Navigation increment in millimeters")
 
 	return output
 }
@@ -85,14 +80,12 @@ func clientMockCommand(opts *options) *cobra.Command {
 		},
 	}
 
-	output.Flags().Float64VarP(&opts.navigationInc, "nav-inc", "", 1.0, "Navigation increment in millimeters")
+	output.Flags().Float64VarP(&opts.NavigationInc, "nav-inc", "", opts.NavigationInc, "Navigation increment in millimeters")
 
 	return output
 }
 
 func clientRPCCommand(opts *options) *cobra.Command {
-	var addr string
-
 	output := &cobra.Command{
 		Use:   "rpc [filename]",
 		Short: "CNC RPC monitor",
@@ -111,8 +104,8 @@ func clientRPCCommand(opts *options) *cobra.Command {
 				_ = app.Close()
 			}()
 
-			if addr != "" {
-				grpcTransport, err := rpc.New(ctx, addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if opts.RPC.Clientddr != "" {
+				grpcTransport, err := rpc.New(ctx, opts.RPC.Clientddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 				if err != nil {
 					return err
 				}
@@ -126,8 +119,8 @@ func clientRPCCommand(opts *options) *cobra.Command {
 		},
 	}
 
-	output.Flags().StringVarP(&addr, "address", "a", "0.0.0.0:1324", "RPC server address")
-	output.Flags().Float64VarP(&opts.navigationInc, "nav-inc", "", 1.0, "Navigation increment in millimeters")
+	output.Flags().StringVarP(&opts.RPC.Clientddr, "address", "a", opts.RPC.Clientddr, "RPC server address")
+	output.Flags().Float64VarP(&opts.NavigationInc, "nav-inc", "", opts.NavigationInc, "Navigation increment in millimeters")
 
 	return output
 }

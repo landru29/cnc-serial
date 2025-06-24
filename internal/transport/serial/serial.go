@@ -25,13 +25,13 @@ type Client struct {
 	handler      transport.ResponseHandler
 	handlerMutex sync.Mutex
 	stop         chan struct{}
-	name         string
+	name         PortName
 	bitRate      int
 }
 
 // New creates the client.
-func New(ctx context.Context, name string, bitRate int) (*Client, error) {
-	port, err := serial.Open(name, &serial.Mode{
+func New(ctx context.Context, name PortName, bitRate int) (*Client, error) {
+	port, err := serial.Open(string(name), &serial.Mode{
 		BaudRate: bitRate,
 	})
 	if err != nil {

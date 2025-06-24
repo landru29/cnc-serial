@@ -2,6 +2,7 @@ package display
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -16,7 +17,19 @@ const (
 )
 
 func (s *Screen) buildView(ctx context.Context, processer gcode.Processor) {
-	s.display = tview.NewApplication()
+	s.display = tview.NewApplication().SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyCtrlC {
+			s.display.Stop()
+
+			return event
+		}
+
+		if event.Modifiers()&tcell.ModCtrl != 0 {
+			_ = s.commander.PushCommands(ctx, false, fmt.Sprintf("0x%0x\n", event.Key()))
+		}
+
+		return event
+	})
 
 	screen, err := gpm.NewScreen()
 
