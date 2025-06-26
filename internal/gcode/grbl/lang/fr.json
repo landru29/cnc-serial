@@ -1,4 +1,7 @@
 {
+    "DEFAULT": {
+        "description": "p[nb]: avancer dans le programme | p-1: lancer tout le programme | s: stop | r: reset"
+    },
     "EXIT": {
         "description": "Quitter l'application"
     },

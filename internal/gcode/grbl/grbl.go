@@ -35,7 +35,11 @@ func (g Gerbil) CodeDescription(lang lang.Language, code string) string {
 	codeName := strings.ToUpper(strings.TrimSpace(code))
 
 	if code, found := g.helper[lang][CodeName(codeName)]; found {
-		return codeName + " - " + code.Description
+		if codeName != strings.ToUpper(gcode.DefaultHelperCode) {
+			return codeName + " - " + code.Description
+		}
+
+		return code.Description
 	}
 
 	return ""

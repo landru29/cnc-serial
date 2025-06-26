@@ -6,6 +6,10 @@ import (
 	"github.com/landru29/cnc-serial/internal/model"
 )
 
+const (
+	DefaultHelperCode = "default"
+)
+
 // Processor provides metheds to help the user on G-Codes.
 type Processor interface {
 	CodeDescription(lang lang.Language, code string) string

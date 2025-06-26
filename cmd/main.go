@@ -16,18 +16,8 @@ import (
 	"github.com/landru29/cnc-serial/internal/lang"
 	"github.com/landru29/cnc-serial/internal/stack/memory"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
-
-const defaultBitRate = 115200
-
-type options struct {
-	availableLanguages []lang.Language
-	language           lang.Language
-	gerbil             *grbl.Gerbil
-	stacker            *memory.Stack
-	logger             *slog.Logger
-	navigationInc      float64
-}
 
 func initApp(ctx context.Context, opts *options, args []string) (*application.Client, error) {
 	var program *grbl.Program
@@ -48,12 +38,12 @@ func initApp(ctx context.Context, opts *options, args []string) (*application.Cl
 		}
 	}
 
-	app, err := application.NewClient(ctx, opts.stacker, opts.gerbil, program, opts.navigationInc)
+	app, err := application.NewClient(ctx, opts.stacker, opts.gerbil, program, opts.NavigationInc)
 	if err != nil {
 		return nil, err
 	}
 
-	app.SetLanguage(opts.language)
+	app.SetLanguage(opts.Language)
 
 	return app, nil
 }
@@ -62,9 +52,8 @@ func mainCommand() (*cobra.Command, *slog.Logger, error) {
 	var forceGRPC bool
 
 	opts := options{
-		language: lang.DefaultLanguage,
-		stacker:  memory.New(),
-		logger:   slog.Default(),
+		stacker: memory.New(),
+		logger:  slog.Default(),
 	}
 
 	gerbil, err := grbl.New()
@@ -75,6 +64,10 @@ func mainCommand() (*cobra.Command, *slog.Logger, error) {
 	opts.availableLanguages = gerbil.AvailableLanguages()
 	opts.gerbil = gerbil
 
+	if err := processOptions(&opts); err != nil {
+		return nil, nil, err
+	}
+
 	output := &cobra.Command{
 		Use:   "cnc",
 		Short: "CNC monitor",
@@ -82,7 +75,7 @@ func mainCommand() (*cobra.Command, *slog.Logger, error) {
 
 	output.Flags().BoolVarP(&forceGRPC, "grpc", "", false, "RPC connection")
 	output.PersistentFlags().VarP(
-		&opts.language,
+		&opts.Language,
 		"lang",
 		"l",
 		fmt.Sprintf("language (available: %s)", joinLang(opts.availableLanguages)),
@@ -94,6 +87,7 @@ func mainCommand() (*cobra.Command, *slog.Logger, error) {
 		clientSerialCommand(&opts),
 		clientMockCommand(&opts),
 		clientRPCCommand(&opts),
+		configFileCommand(&opts),
 	)
 
 	return output, opts.logger, nil
@@ -132,5 +126,21 @@ func main() {
 		logger.Error("could not execute command", "message", err.Error())
 
 		panic(err)
+	}
+}
+
+func configFileCommand(opts *options) *cobra.Command {
+	return &cobra.Command{
+		Use:   "save-config",
+		Short: "save config file",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			data, err := yaml.Marshal(opts)
+			if err != nil {
+				return err
+			}
+
+			// Sauvegarder dans un fichier
+			return os.WriteFile("drill.yaml", data, 0644)
+		},
 	}
 }

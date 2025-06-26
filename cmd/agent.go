@@ -28,29 +28,22 @@ func agentCommand(opts *options) *cobra.Command {
 }
 
 func rpcAgentCommand(opts *options) *cobra.Command {
-	var addr string
-
 	output := &cobra.Command{
 		Use:   "rpc",
 		Short: "start the rpc agent",
 	}
 
-	output.PersistentFlags().StringVarP(&addr, "address", "a", ":1324", "RPC server address")
+	output.PersistentFlags().StringVarP(&opts.RPC.AgentAddr, "address", "a", opts.RPC.AgentAddr, "RPC server address")
 
 	output.AddCommand(
-		rpcSerialCommand(opts, &addr),
-		rpcMockCommand(opts, &addr),
+		rpcSerialCommand(opts),
+		rpcMockCommand(opts),
 	)
 
 	return output
 }
 
-func rpcSerialCommand(opts *options, addr *string) *cobra.Command {
-	var (
-		bitRate  int
-		portName string
-	)
-
+func rpcSerialCommand(opts *options) *cobra.Command {
 	output := &cobra.Command{
 		Use:   "serial [filename]",
 		Short: "CNC Serial monitor",
@@ -62,22 +55,22 @@ func rpcSerialCommand(opts *options, addr *string) *cobra.Command {
 				cancel()
 			}()
 
-			lis, err := net.Listen("tcp", *addr)
+			lis, err := net.Listen("tcp", opts.RPC.AgentAddr)
 			if err != nil {
 				return err
 			}
 
-			opts.logger.Info("listening gRPC", "addr", *addr)
+			opts.logger.Info("listening gRPC", "addr", opts.RPC.AgentAddr)
 
-			if portName != "" && bitRate > 0 {
-				serialClient, err := serial.New(ctx, portName, bitRate)
+			if opts.Serial.PortName != "" && opts.Serial.BitRate > 0 {
+				serialClient, err := serial.New(ctx, opts.Serial.PortName, opts.Serial.BitRate)
 				if err != nil {
 					return err
 				}
 
 				transporter = serialClient
 
-				opts.logger.Info(fmt.Sprintf("Connected to %s with bitrate %d", portName, bitRate))
+				opts.logger.Info(fmt.Sprintf("Connected to %s with bitrate %d", opts.Serial.PortName, opts.Serial.BitRate))
 
 				defer func() {
 					_ = serialClient.Close()
@@ -104,13 +97,13 @@ func rpcSerialCommand(opts *options, addr *string) *cobra.Command {
 		},
 	}
 
-	output.Flags().IntVarP(&bitRate, "bit-rate", "b", defaultBitRate, "Bit rate")
-	output.Flags().StringVarP(&portName, "port", "p", defaultPort(), "Port name")
+	output.Flags().IntVarP(&opts.Serial.BitRate, "bit-rate", "b", opts.Serial.BitRate, "Bit rate")
+	output.Flags().VarP(&opts.Serial.PortName, "port", "p", "Port name")
 
 	return output
 }
 
-func rpcMockCommand(opts *options, addr *string) *cobra.Command {
+func rpcMockCommand(opts *options) *cobra.Command {
 	output := &cobra.Command{
 		Use:   "mock [filename]",
 		Short: "CNC mock monitor",
@@ -122,12 +115,12 @@ func rpcMockCommand(opts *options, addr *string) *cobra.Command {
 				cancel()
 			}()
 
-			lis, err := net.Listen("tcp", *addr)
+			lis, err := net.Listen("tcp", opts.RPC.AgentAddr)
 			if err != nil {
 				return err
 			}
 
-			opts.logger.Info("listening gRPC", "addr", *addr)
+			opts.logger.Info("listening gRPC", "addr", opts.RPC.AgentAddr)
 
 			nopTransport := nop.New(ctx)
 
