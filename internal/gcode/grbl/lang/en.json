@@ -1,4 +1,7 @@
 {
+    "DEFAULT": {
+        "description": "p[nb]: process program | p-1: process all the program | s: stop | r: reset"
+    },
     "EXIT": {
         "description": "Quit the application"
     },

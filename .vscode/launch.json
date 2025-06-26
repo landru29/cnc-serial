@@ -12,7 +12,7 @@
             "program": "${workspaceFolder}/cmd",
             "console": "integratedTerminal",
             "args": ["mock", "../internal/gcode/grbl/testdata/prog01.gcode"],
-            "buildFlags": ["-tags", "withbutton"]
+            "buildFlags": ["-tags", "withbutton"],
         },
         {
             "name": "No-buttons",
@@ -67,6 +67,17 @@
             "mode": "auto",
             "program": "${workspaceFolder}/cmd",
             "args": ["clean", "../internal/gcode/grbl/testdata/prog01.gcode"],
+        },
+        {
+            "name": "save-config",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd",
+            "args": ["save-config"],
+            "env": {
+                "CNC_LANGUAGE": "FR"
+            },
         },
     ]
 }

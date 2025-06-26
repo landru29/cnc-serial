@@ -13,10 +13,11 @@ import (
 
 const (
 	enterCommandLabel = "Enter command"
-	defaultHelp       = "p[nb]: process program | p-1: process all the program | s: stop | r: reset"
 )
 
 func (s *Screen) buildView(ctx context.Context, processer gcode.Processor) {
+	s.processer = processer
+
 	s.display = tview.NewApplication().SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyCtrlC {
 			s.display.Stop()
@@ -113,7 +114,11 @@ func (s *Screen) buildView(ctx context.Context, processer gcode.Processor) {
 			return
 		}
 
-		s.helpArea.SetText(defaultHelp)
+		if description := processer.CodeDescription(s.currentLang, gcode.DefaultHelperCode); description != "" {
+			s.helpArea.SetText(description)
+
+			return
+		}
 	})
 
 	s.logArea.SetBorder(true)

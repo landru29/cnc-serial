@@ -21,6 +21,8 @@ type BaseScreen struct {
 	helpArea   *tview.TextView
 	statusArea *tview.TextView
 
+	processer gcode.Processor
+
 	commander      control.Commander
 	stackRetriever stack.Retriever
 	currentLang    lang.Language
@@ -56,4 +58,14 @@ func (s *Screen) SetCommandSender(commander control.Commander) {
 // SetLanguage sets the language.
 func (s *Screen) SetLanguage(language lang.Language) {
 	s.currentLang = language
+
+	if s.processer == nil {
+		return
+	}
+
+	if description := s.processer.CodeDescription(s.currentLang, gcode.DefaultHelperCode); description != "" {
+		s.helpArea.SetText(description)
+
+		return
+	}
 }

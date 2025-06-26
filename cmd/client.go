@@ -104,8 +104,8 @@ func clientRPCCommand(opts *options) *cobra.Command {
 				_ = app.Close()
 			}()
 
-			if opts.RPC.Clientddr != "" {
-				grpcTransport, err := rpc.New(ctx, opts.RPC.Clientddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if opts.RPC.ClientAddr != "" {
+				grpcTransport, err := rpc.New(ctx, opts.RPC.ClientAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 				if err != nil {
 					return err
 				}
@@ -119,7 +119,7 @@ func clientRPCCommand(opts *options) *cobra.Command {
 		},
 	}
 
-	output.Flags().StringVarP(&opts.RPC.Clientddr, "address", "a", opts.RPC.Clientddr, "RPC server address")
+	output.Flags().StringVarP(&opts.RPC.ClientAddr, "address", "a", opts.RPC.ClientAddr, "RPC server address")
 	output.Flags().Float64VarP(&opts.NavigationInc, "nav-inc", "", opts.NavigationInc, "Navigation increment in millimeters")
 
 	return output

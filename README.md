@@ -38,10 +38,12 @@ Usage:
 
 Available Commands:
   agent       manage the local agent
+  clean       clean gcode
   completion  Generate the autocompletion script for the specified shell
   help        Help about any command
   mock        CNC mock monitor
   rpc         CNC RPC monitor
+  save-config save config file
   serial      CNC Serial monitor
 
 Flags:
@@ -65,6 +67,14 @@ rpcAgent-->rpcAgentMock[mock]
 
 
 `filename`, if specified, must be a valide G-Code.
+
+Available environment variables are:
+* `CNC_LANGUAGE`: for helpers
+* `CNC_NAVIGATIONINC`: increment in milimeters when pushing navigation button 
+* `CNC_RPC_CLIENTADDR`: RPC client address
+* `CNC_RPC_AGENTADDR`: RPC agent address
+* `CNC_SERIAL_PORTNAME`: Serial port name
+* `CNC_SERIAL_BITRATE`: Serial bit rate
 
 ## Debug
 

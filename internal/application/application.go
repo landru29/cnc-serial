@@ -4,6 +4,7 @@ package application
 import (
 	"context"
 	"io"
+	"strings"
 
 	"github.com/landru29/cnc-serial/internal/control"
 	"github.com/landru29/cnc-serial/internal/control/usecase"
@@ -74,7 +75,7 @@ func NewClient(
 
 // SetLanguage sets the language.
 func (c *Client) SetLanguage(language lang.Language) {
-	c.screen.SetLanguage(language)
+	c.screen.SetLanguage(lang.Language(strings.ToLower(string(language))))
 }
 
 // AvailableLanguages lists all available languages.
