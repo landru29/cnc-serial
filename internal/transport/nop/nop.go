@@ -12,7 +12,7 @@ import (
 var _ transport.TransportCloser = &Client{}
 
 const (
-	defaultStatus          = "<Idle|MPos:0.000,0.000,0.000|WPos:0.000,0.000,0.000|FS:0,0|Pn:P>"
+	defaultStatus          = "<Idle|MPos:0.000,0.000,0.000|WPos:0.000,0.000,0.000|FS:0,0|Pn:P|Bf:15,127>"
 	delayBetweenStatusSend = 500 * time.Millisecond
 )
 

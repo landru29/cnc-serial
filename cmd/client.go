@@ -49,6 +49,7 @@ func clientSerialCommand(opts *options) *cobra.Command {
 	output.Flags().IntVarP(&opts.Serial.BitRate, "bit-rate", "b", opts.Serial.BitRate, "Bit rate")
 	output.Flags().VarP(&opts.Serial.PortName, "port", "p", "Port name")
 	output.Flags().Float64VarP(&opts.NavigationInc, "nav-inc", "", opts.NavigationInc, "Navigation increment in millimeters")
+	output.Flags().Int64VarP(&opts.MaxBlocksInBuffer, "max-blocks-in-buffer", "", opts.MaxBlocksInBuffer, "maximum blocks in buffer")
 
 	return output
 }
@@ -81,6 +82,7 @@ func clientMockCommand(opts *options) *cobra.Command {
 	}
 
 	output.Flags().Float64VarP(&opts.NavigationInc, "nav-inc", "", opts.NavigationInc, "Navigation increment in millimeters")
+	output.Flags().Int64VarP(&opts.MaxBlocksInBuffer, "max-blocks-in-buffer", "", opts.MaxBlocksInBuffer, "maximum blocks in buffer")
 
 	return output
 }
@@ -121,6 +123,7 @@ func clientRPCCommand(opts *options) *cobra.Command {
 
 	output.Flags().StringVarP(&opts.RPC.ClientAddr, "address", "a", opts.RPC.ClientAddr, "RPC server address")
 	output.Flags().Float64VarP(&opts.NavigationInc, "nav-inc", "", opts.NavigationInc, "Navigation increment in millimeters")
+	output.Flags().Int64VarP(&opts.MaxBlocksInBuffer, "max-blocks-in-buffer", "", opts.MaxBlocksInBuffer, "maximum blocks in buffer")
 
 	return output
 }

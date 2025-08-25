@@ -34,11 +34,13 @@ type Controller struct {
 	programmerSetMutex   sync.Mutex
 	bufferline           []byte
 	regexpProcessProgram *regexp.Regexp
+	maxblocksInBuffer    int64
 }
 
 // New creates the controller.
 func New(
 	ctx context.Context,
+	maxblocksInBuffer int64,
 	stackPusher stack.Pusher,
 	processer gcode.Processor,
 	displayList ...io.Writer,
@@ -47,6 +49,7 @@ func New(
 		stackPusher:          stackPusher,
 		displayList:          displayList,
 		processer:            processer,
+		maxblocksInBuffer:    maxblocksInBuffer,
 		regexpProcessProgram: regexp.MustCompile(`(?i)p([-+\d]+)`),
 	}
 

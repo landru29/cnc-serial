@@ -54,13 +54,15 @@ func (c *Controller) processLine(ctx context.Context, resp string) string {
 	c.status.Merge(*status)
 
 	// launch next program commands if available.
-	if strings.ToUpper(string(c.status.State)) == "IDLE" && c.status.CanRun {
-		cmd, err := c.programmer.NextCommandToExecute()
-		if err == nil {
-			_ = c.PushCommands(ctx, true, cmd)
-			_ = c.PushCommands(ctx, true, c.processer.CommandStatus())
+	if c.status.CanRun && (c.status.Buffer.AvailableBlocks < c.maxblocksInBuffer || (c.maxblocksInBuffer == 0 && strings.ToUpper(string(c.status.State)) == "IDLE")) {
+		for range c.maxblocksInBuffer - c.status.Buffer.AvailableBlocks {
+			cmd, err := c.programmer.NextCommandToExecute()
+			if err == nil {
+				_ = c.PushCommands(ctx, true, cmd)
+				_ = c.PushCommands(ctx, true, c.processer.CommandStatus())
 
-			_ = c.displayProgram()
+				_ = c.displayProgram()
+			}
 		}
 	}
 

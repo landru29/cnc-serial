@@ -33,6 +33,7 @@ func NewClient(
 	processer gcode.Processor,
 	program gcode.Programmer,
 	navigationInc float64,
+	maxBlocksInBuffer int64,
 ) (*Client, error) {
 	screen := display.New(ctx, stacker, processer, navigationInc)
 
@@ -44,7 +45,7 @@ func NewClient(
 		program:   program,
 	}
 
-	output.commander = usecase.New(ctx, stacker, processer, output)
+	output.commander = usecase.New(ctx, maxBlocksInBuffer, stacker, processer, output)
 
 	if program != nil {
 		if err := program.ReadNextInstruction(); err != nil {

@@ -22,6 +22,7 @@ type options struct {
 	NavigationInc      float64         `default:"1.0" json:"navigationInc" mapstructure:"navigation_inc" yaml:"navigationInc"`
 	RPC                rpcOptions      `              json:"rpc"           yaml:"rpc"`
 	Serial             serialOptions   `              json:"serial"        yaml:"serial"`
+	MaxBlocksInBuffer  int64           `default:"2" json:"maxBlocksInBuffer" mapstructure:"max_blocks_in_buffer" yaml:"maxBlocksInBuffer"`
 }
 
 type serialOptions struct {

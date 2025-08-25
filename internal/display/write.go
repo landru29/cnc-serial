@@ -62,13 +62,15 @@ func (s *Screen) displayStatus(status model.Status) {
 	coordinates := status.ToolCoordinates()
 
 	text := fmt.Sprintf(
-		"%s\t\t%s\tX: %+07.2f\t\tY: %+07.2f\t\tZ: %+07.2f\t%04d\t%s\t%s",
+		"%s\t\t%s\tX: %+07.2f\t\tY: %+07.2f\t\tZ: %+07.2f\t%04d\t%d/%d\t%s\t%s",
 		status.RelativeCoordinates,
 		status.CurrentState(),
 		coordinates.XCoordinate,
 		coordinates.YCoordinate,
 		coordinates.ZCoordinate,
 		status.RemainingProgram,
+		status.Buffer.AvailableBlocks,
+		status.Buffer.AvailableBuffer,
 		map[bool]string{true: "READY", false: "STOP "}[status.CanRun],
 		status.FormatedConnection(),
 	)
@@ -109,14 +111,16 @@ func (s *Screen) displayProgram(program model.Program) {
 
 	scrollTo := int64(0)
 
-	if program.CurrentLine > int64(height)/2 {
-		scrollTo = program.CurrentLine - int64(height)/3 //nolint: mnd
-	}
+	_, _, width, _ := s.progArea.Box.GetRect()
 
-	for idx := range splitter {
+	for idx, lineContent := range splitter {
 		startColor := ""
 
 		endColor := ""
+
+		if int64(idx) < program.CurrentLine && program.CurrentLine > int64(height)/2 {
+			scrollTo += lineCount(width, lineContent)
+		}
 
 		if int64(idx) == program.CurrentLine {
 			startColor = "[#00ff00]"
@@ -131,7 +135,25 @@ func (s *Screen) displayProgram(program model.Program) {
 		output[idx] = fmt.Sprintf("[#888888]%d:[#ffffff] %s%s%s", idx, startColor, splitter[idx], endColor)
 	}
 
+	if program.CurrentLine > int64(height)/2 {
+		scrollTo -= int64(height) / 3 //nolint: mnd
+	}
+
 	s.progArea.SetText(strings.Join(output, "\n"))
 
 	s.progArea.ScrollTo(int(scrollTo), 0)
+}
+
+func lineCount(width int, lineContent string) int64 {
+	if len(lineContent) < width {
+		return 1
+	}
+
+	out := len(lineContent) / width
+
+	if len(lineContent)%width > 0 {
+		out++
+	}
+
+	return int64(out)
 }

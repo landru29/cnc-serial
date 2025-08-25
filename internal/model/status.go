@@ -138,6 +138,7 @@ func (s *Status) Merge(status Status) {
 	s.ToolOffset = s.ToolOffset.merge(status.ToolOffset)
 	s.State = status.State
 	s.Speed = s.Speed.merge(status.Speed)
+	s.Buffer = status.Buffer
 
 	if s.Alarm == nil || status.Alarm != nil {
 		s.Alarm = status.Alarm

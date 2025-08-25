@@ -38,7 +38,7 @@ func initApp(ctx context.Context, opts *options, args []string) (*application.Cl
 		}
 	}
 
-	app, err := application.NewClient(ctx, opts.stacker, opts.gerbil, program, opts.NavigationInc)
+	app, err := application.NewClient(ctx, opts.stacker, opts.gerbil, program, opts.NavigationInc, opts.MaxBlocksInBuffer)
 	if err != nil {
 		return nil, err
 	}
